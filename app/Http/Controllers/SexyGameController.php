@@ -382,7 +382,7 @@ class SexyGameController extends Controller
 
                                 Log::info([
                                     "action" => $action,
-                                    "userWallet" => $userWallet,
+                                    // "userWallet" => $userWallet,
                                     "wallet_amount_before" => $wallet_amount_before,
                                     "wallet_amount_after" => $wallet_amount_after,
                                 ]);
@@ -698,7 +698,9 @@ class SexyGameController extends Controller
 
                             $tip = $this->checkTransactionHistory('tip', $element);
                             if (!$tip) {
-                                $wallet_amount_after = $wallet_amount_after - $element["tip"];
+                                if (!$this->checkTransactionHistory('cancelTip', $element)) {
+                                    $wallet_amount_after = $wallet_amount_after - $element["tip"];
+                                }
 
                                 User::where('username', $element['userId'])->update([
                                     'main_wallet' => $wallet_amount_after
@@ -749,6 +751,10 @@ class SexyGameController extends Controller
                                     if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
+                                }
+                            } else {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
                         } else {
