@@ -4,20 +4,24 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\SexyGame;
+use App\Models\Joker;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class SexyGameController extends Controller
+class JokerController extends Controller
 {
-    private $host = "https://tttint.onlinegames22.com";
+    private $host = "http://www.gwc688.net";
+    private $AppID = "F5K5";
+    private $Secret = "wzqjkthq8bbje";
+    private $language = "th";
+
     private $certCode = "N19V3PqBl1QJtAyK85e";
     private $agentId = "nasavg";
     private $currencyCode = "THB";
-    private $language = "th";
+    
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}} ';
 
     public function login($username)
@@ -29,26 +33,28 @@ class SexyGameController extends Controller
             exit();
         }
 
+        // return $user->token;
+
         try {
             $client = new Client();
-            $res = $client->request('POST', $this->host . '/wallet/login', [
-                'form_params' => [
-                    'cert' =>  $this->certCode,
-                    'agentId' =>  $this->agentId,
-                    'userId' =>  $username,
-                    'isMobileLogin' =>  false,
-                    'externalURL' =>  'https://www.google.com.tw/',
-                    'gameForbidden' =>  '{"JDBFISH":{"FH":["ALL"]}}',
-                    'gameType' =>  'SLOT',
-                    'platform' =>  'RT',
-                    'language' =>  $this->language,
-                    'betLimit' =>  $this->betLimit,
-                ]
-            ]);
+            $res = $client->request('GET', $this->host . '/playGame?token='.$user->token.'&appID='.$this->AppID.'&gameCode=hf5hx8w9u1q3r&language='.$this->language.'&mobile=true&redirectUrl=');
             // echo $res->getStatusCode();
             // echo $res->getHeader('content-type')[0];
             // echo $res->getBody();
             $response = $res->getBody();
+
+            return $response;
+
+
+
+
+
+
+
+
+
+
+
             if ($response) {
                 $json = json_decode($response);
                 if ($json->status == '0000') {
@@ -382,7 +388,7 @@ class SexyGameController extends Controller
 
                                 Log::info([
                                     "action" => $action,
-                                    // "userWallet" => $userWallet,
+                                    "userWallet" => $userWallet,
                                     "wallet_amount_before" => $wallet_amount_before,
                                     "wallet_amount_after" => $wallet_amount_after,
                                 ]);
@@ -698,9 +704,7 @@ class SexyGameController extends Controller
 
                             $tip = $this->checkTransactionHistory('tip', $element);
                             if (!$tip) {
-                                if (!$this->checkTransactionHistory('cancelTip', $element)) {
-                                    $wallet_amount_after = $wallet_amount_after - $element["tip"];
-                                }
+                                $wallet_amount_after = $wallet_amount_after - $element["tip"];
 
                                 User::where('username', $element['userId'])->update([
                                     'main_wallet' => $wallet_amount_after
@@ -751,10 +755,6 @@ class SexyGameController extends Controller
                                     if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
-                                }
-                            } else {
-                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                    throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
                         } else {
@@ -840,7 +840,7 @@ class SexyGameController extends Controller
             $sexyGame->save();
             return $sexyGame->id;
         } catch (\Exception $e) {
-            // echo $e;
+            echo $e;
             return false;
         }
     }
