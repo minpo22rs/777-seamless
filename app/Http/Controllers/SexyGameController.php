@@ -572,7 +572,10 @@ class SexyGameController extends Controller
                             } else if ($element["betAmount"] != $element["winAmount"]) {
                                 $betNSettleTransaction = $this->checkTransactionHistory('betNSettle', $element);
                                 if (!$betNSettleTransaction) {
-                                    $wallet_amount_after = $wallet_amount_after - $element["betAmount"] + $element["winAmount"];
+
+                                    if (!$this->checkTransactionHistory('cancelBetNSettle', $element)) {
+                                        $wallet_amount_after = $wallet_amount_after - $element["betAmount"] + $element["winAmount"];
+                                    }
 
                                     User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
@@ -610,10 +613,11 @@ class SexyGameController extends Controller
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
 
-                            if ($element["betAmount"] != $element["winAmount"]) {
+                            $betNSettle = $this->checkTransactionHistory('betNSettle', $element);
+                            if ($betNSettle) {
                                 $cancelBetNSettle = $this->checkTransactionHistory('cancelBetNSettle', $element);
                                 if (!$cancelBetNSettle) {
-                                    $wallet_amount_after = $wallet_amount_after - $element["betAmount"] - $element["winAmount"];
+                                    $wallet_amount_after = $wallet_amount_after + $betNSettle->betAmount;
 
                                     User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
@@ -622,6 +626,10 @@ class SexyGameController extends Controller
                                     if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
+                                }
+                            } else {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
                         } else {
