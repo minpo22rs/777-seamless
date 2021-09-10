@@ -38,6 +38,16 @@ $router->group(['prefix' => 'apiseamless'], function () use ($router) {
     $router->post('/jili/dev/sessionBet', 'JiliGamController@sessionBet');
     $router->post('/jili/dev/cancelSessionBet', 'JiliGamController@cancelSessionBet');
 
+
+    $router->get('/ppgaming/dev', 'PPGameController@index');
+    $router->get('/ppgaming/dev/login/{username}/game/{gameId}', 'PPGameController@login');
+    $router->post('/ppgaming/dev', 'PPGameController@auth');
+    $router->post('/ppgaming/dev/auth', 'PPGameController@auth');
+    $router->post('/ppgaming/auth', 'PPGameController@auth');
+    $router->post('/ppgaming', 'PPGameController@auth');
+    $router->post('/auth', 'PPGameController@auth');
+    $router->post('/', 'PPGameController@auth');
+
     //Joker
     $router->get('/joker/test', function () use ($router) {
         return " 🌏 Hello, Joker!";
