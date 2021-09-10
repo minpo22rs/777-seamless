@@ -25,17 +25,23 @@ $router->group(['prefix' => 'apiseamless'], function () use ($router) {
     $router->get('/sexygaming/dev/login/{username}', 'SexyGameController@login');
     $router->post('/sexygaming/dev', 'SexyGameController@getBalance');
 
+    $router->get('/sexygaming/login/{username}', 'SexyGameController@login');
+    $router->post('/sexygaming', 'SexyGameController@getBalance');
 
-    $router->get('/jili/dev/login/{username}', 'JiliGamController@login');
+
+
+    $router->get('/jili/dev/login/{username}/game/{gameId}', 'JiliGamController@login');
     $router->get('/jili/dev', 'JiliGamController@index');
-    $router->post('/jili/dev', 'JiliGamController@getBalance');
     $router->post('/jili/dev/auth', 'JiliGamController@auth');
-
+    $router->post('/jili/dev/bet', 'JiliGamController@bet');
+    $router->post('/jili/dev/cancelBet', 'JiliGamController@cancelBet');
+    $router->post('/jili/dev/sessionBet', 'JiliGamController@sessionBet');
+    $router->post('/jili/dev/cancelSessionBet', 'JiliGamController@cancelSessionBet');
 
     //Joker
     $router->get('/joker/test', function () use ($router) {
         return " 🌏 Hello, Joker!";
     });
     $router->get('/joker/dev/login/{username}', 'JokerController@login');
-    $router->post('/joker/dev', 'JokerController@getBalance');
+    $router->get('/joker/dev', 'JokerController@testt');
 });

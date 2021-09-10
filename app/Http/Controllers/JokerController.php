@@ -21,7 +21,7 @@ class JokerController extends Controller
     private $certCode = "N19V3PqBl1QJtAyK85e";
     private $agentId = "nasavg";
     private $currencyCode = "THB";
-    
+
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}} ';
 
     public function login($username)
@@ -37,7 +37,7 @@ class JokerController extends Controller
 
         try {
             $client = new Client();
-            $res = $client->request('GET', $this->host . '/playGame?token='.$user->token.'&appID='.$this->AppID.'&gameCode=hf5hx8w9u1q3r&language='.$this->language.'&mobile=true&redirectUrl=');
+            $res = $client->request('GET', $this->host . '/playGame?token=' . $user->token . '&appID=' . $this->AppID . '&gameCode=hf5hx8w9u1q3r&language=' . $this->language . '&mobile=true&redirectUrl=');
             // echo $res->getStatusCode();
             // echo $res->getHeader('content-type')[0];
             // echo $res->getBody();
@@ -80,6 +80,50 @@ class JokerController extends Controller
                 'message' => $e->getMessage()
             ]);
         }
+    }
+
+    public function testt()
+    {
+        $url = 'http://api688.net/authenticate-token';
+        $appID = 'F5K5';
+        $secretKey = 'wzqjkthq8bbje';
+
+        $seconds = round((microtime(true) * 1000));
+
+        $array = array(
+            "Timestamp" => $seconds,
+            "AppID" => $appID,
+        );
+
+
+        $array = array_filter($array);
+        $array = array_change_key_case($array, CASE_LOWER);
+        ksort($array);
+
+        $rawData = '';
+        foreach ($array as $Key => $Value)
+            $rawData .=  $Key . '=' . $Value . '&';
+
+        $rawData = substr($rawData, 0, -1);
+        $rawData .= $secretKey;
+        $hash = md5($rawData);
+
+        $postData = $array;
+        $postData['hash'] = $hash;
+
+
+        //Encode the array into JSON.
+        $jsonDataEncoded = json_encode($postData);
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonDataEncoded);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+
+        $data = curl_exec($ch);
+        curl_close($ch);
+
+        var_dump($data);
     }
 
     private function createMember($username)
