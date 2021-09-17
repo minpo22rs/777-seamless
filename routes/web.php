@@ -17,6 +17,22 @@ $router->get('/', function () use ($router) {
     return " 🌏 Hello, World!";
 });
 
+
+
+// https://zap88.com/seamless/pp/dev/login/ppadmin/game/vs25pandagold
+$router->group(['prefix' => 'seamless'], function () use ($router) {
+    $router->get('/pp/dev', 'PPGameController@index');
+    $router->get('/pp/dev/login/{username}/game/{gameId}', 'PPGameController@login');
+    $router->post('/pp/dev/authenticate.html', 'PPGameController@auth');
+    $router->post('/pp/dev/balance.html', 'PPGameController@balance');
+    $router->post('/pp/dev/bet.html', 'PPGameController@bet');
+    $router->post('/pp/dev/result.html', 'PPGameController@settle');
+    $router->post('/pp/dev/bonusWin.html', 'PPGameController@bonusWin');
+    $router->post('/pp/dev/jackpotWin.html', 'PPGameController@jackpotWin');
+    $router->post('/pp/dev/refund.html', 'PPGameController@cancelBet');
+    $router->post('/pp/dev/promoWin.html', 'PPGameController@promoWin');
+});
+
 $router->group(['prefix' => 'apiseamless'], function () use ($router) {
     //Sexy game
     $router->get('/sexygaming/test', function () use ($router) {
@@ -28,8 +44,6 @@ $router->group(['prefix' => 'apiseamless'], function () use ($router) {
     $router->get('/sexygaming/login/{username}', 'SexyGameController@login');
     $router->post('/sexygaming', 'SexyGameController@getBalance');
 
-
-
     $router->get('/jili/dev/login/{username}/game/{gameId}', 'JiliGamController@login');
     $router->get('/jili/dev', 'JiliGamController@index');
     $router->post('/jili/dev/auth', 'JiliGamController@auth');
@@ -37,16 +51,6 @@ $router->group(['prefix' => 'apiseamless'], function () use ($router) {
     $router->post('/jili/dev/cancelBet', 'JiliGamController@cancelBet');
     $router->post('/jili/dev/sessionBet', 'JiliGamController@sessionBet');
     $router->post('/jili/dev/cancelSessionBet', 'JiliGamController@cancelSessionBet');
-
-
-    $router->get('/ppgaming/dev', 'PPGameController@index');
-    $router->get('/ppgaming/dev/login/{username}/game/{gameId}', 'PPGameController@login');
-    $router->post('/ppgaming/dev', 'PPGameController@auth');
-    $router->post('/ppgaming/dev/auth', 'PPGameController@auth');
-    $router->post('/ppgaming/auth', 'PPGameController@auth');
-    $router->post('/ppgaming', 'PPGameController@auth');
-    $router->post('/auth', 'PPGameController@auth');
-    $router->post('/', 'PPGameController@auth');
 
     //Joker
     $router->get('/joker/test', function () use ($router) {
