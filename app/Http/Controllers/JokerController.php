@@ -13,879 +13,565 @@ use Illuminate\Support\Facades\Log;
 
 class JokerController extends Controller
 {
-    private $host = "http://www.gwc688.net";
-    private $AppID = "F5K5";
-    private $Secret = "wzqjkthq8bbje";
-    private $language = "th";
+    private $host = "http://api688.net/seamless";
+    private $AppID = "TGFV";
+    private $SecretKey = "qc8y9k63x55wr";
 
-    private $certCode = "N19V3PqBl1QJtAyK85e";
-    private $agentId = "nasavg";
-    private $currencyCode = "THB";
-
-    private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}} ';
-
-    public function login($username)
+    private function encryptBody($array_params)
     {
-        $user = User::where('username', $username)->first();
-        if (empty($user)) {
-            $response = ["message" => 'Oops! The user does not exist'];
-            return response($response, 401);
-            exit();
-        }
-
-        // return $user->token;
-
-        try {
-            $client = new Client();
-            $res = $client->request('GET', $this->host . '/playGame?token=' . $user->token . '&appID=' . $this->AppID . '&gameCode=hf5hx8w9u1q3r&language=' . $this->language . '&mobile=true&redirectUrl=');
-            // echo $res->getStatusCode();
-            // echo $res->getHeader('content-type')[0];
-            // echo $res->getBody();
-            $response = $res->getBody();
-
-            return $response;
-
-
-
-
-
-
-
-
-
-
-
-            if ($response) {
-                $json = json_decode($response);
-                if ($json->status == '0000') {
-                    return redirect($json->url);
-                } else if ($json->status == '1028') {
-                    //1028 = Unable to proceed. please try again later
-                    return $this->login($username);
-                } else if ($json->status == '1002') {
-                    $responsenewmember = $this->createMember($username);
-                    if (!$responsenewmember) {
-                        return "error create member";
-                    } else if ($responsenewmember->status == '0000') {
-                        return $this->login($username);
-                    } else {
-                        return $responsenewmember;
-                    }
-                } else {
-                    return $json;
-                }
-            }
-        } catch (BadResponseException $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ]);
-        }
-    }
-
-    public function testt()
-    {
-        $url = 'http://api688.net/authenticate-token';
-        $appID = 'F5K5';
-        $secretKey = 'wzqjkthq8bbje';
-
-        $seconds = round((microtime(true) * 1000));
-
-        $array = array(
-            "Timestamp" => $seconds,
-            "AppID" => $appID,
-        );
-
-
-        $array = array_filter($array);
+        $array = array_filter($array_params);
         $array = array_change_key_case($array, CASE_LOWER);
         ksort($array);
 
+        // print_r($array);
+
         $rawData = '';
-        foreach ($array as $Key => $Value)
+        foreach ($array as $Key => $Value) {
             $rawData .=  $Key . '=' . $Value . '&';
+        }
 
         $rawData = substr($rawData, 0, -1);
-        $rawData .= $secretKey;
+        $rawData .= $this->SecretKey;
+
+        // echo "rawData ==>" . $rawData . "<br/>";
+
         $hash = md5($rawData);
-
         $postData = $array;
-        $postData['hash'] = $hash;
-
-
-        //Encode the array into JSON.
-        $jsonDataEncoded = json_encode($postData);
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonDataEncoded);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-
-        $data = curl_exec($ch);
-        curl_close($ch);
-
-        var_dump($data);
+        $postData['Hash'] = $hash;
+        return $postData;
     }
 
-    private function createMember($username)
+    public function index()
     {
+        $seconds = round((microtime(true) * 1000));
         try {
             $client = new Client();
-            $res = $client->request('POST', $this->host . '/wallet/createMember', [
-                'form_params' => [
-                    'cert' =>  $this->certCode,
-                    'agentId' =>  $this->agentId,
-                    'userId' =>  $username,
-                    'currency' =>  $this->currencyCode,
-                    'language' =>  $this->language,
-                    'betLimit' =>  $this->betLimit,
-                ]
+            $res = $client->request("POST", "{$this->host}/list-games", [
+                'form_params' => $this->encryptBody(array(
+                    "Timestamp" => $seconds,
+                    "AppID" => $this->AppID,
+                ))
             ]);
-            $response = $res->getBody()->getContents();
-            if ($response) {
-                $json = json_decode($response);
-                return $json;
-            } else {
-                return false;
-            }
-        } catch (BadResponseException $e) {
-            return false;
+            $response = $res->getBody();
+            return $response;
+        } catch (\Exception $e) {
+            return $e;
         }
     }
 
-    public function tsDateISOString($keepOffset = false)
+    public function auth(Request $request)
     {
-        $date = Carbon::now();
-        if (!$date->isValid()) {
-            return null;
-        }
-        $yearFormat = $date->year < 0 || $date->year > 9999 ? 'YYYYYY' : 'YYYY';
-        $tzFormat = $keepOffset ? 'Z' : '[Z]';
-        $date = $keepOffset ? $date : $date->avoidMutation()->utc();
-
-        return $date->isoFormat("$yearFormat-MM-DD[T]HH:mm:ss.SSS$tzFormat");
-    }
-
-    public function getBalance(Request $request)
-    {
-        $message = json_decode($request->message, true);
-        $wallet_amount_after = 0;
-        $action = $message['action'];
-        if ($action != "getBalance") {
-            Log::debug($request);
-        }
-        switch ($action) {
-            case "getBalance":;
-                try {
-                    $username = $message["userId"];
-                    $userWallet = User::select('main_wallet')->where('username', $username)->first();
-                    if ($userWallet) {
-                        $main_wallet = $userWallet->main_wallet;
-                    } else {
-                        throw new \Exception('Invalid user Id', 1000);
-                    }
-
-
-                    return [
-                        "userId" => $username,
-                        "balance" => $main_wallet,
-                        "balanceTs" =>  $this->tsDateISOString(),
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "bet":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $betTransaction = $this->checkTransactionHistory('bet', $element);
-                            if (!$betTransaction) {
-                                if ($wallet_amount_before > 0 && $wallet_amount_before >= $element["betAmount"]) {
-                                    /// cancel bet before bet 
-                                    if (!$this->checkTransactionHistory('cancelBet', $element)) {
-                                        $wallet_amount_after = $wallet_amount_after - $element['betAmount'];
-                                    }
-
-                                    User::where('username', $element['userId'])->update([
-                                        'main_wallet' => $wallet_amount_after
-                                    ]);
-
-                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                        throw new \Exception('Fail (System Error)', 9999);
-                                    }
-
-                                    // Log::info([
-                                    //     'action' => $action,
-                                    //     'wallet_amount_before' => $wallet_amount_before,
-                                    //     'betAmount' => $element["betAmount"],
-                                    //     'wallet_amount_after' => $wallet_amount_after,
-                                    // ]);
-                                } else {
-                                    throw new \Exception('Not Enough Balance', 1018);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "balance" => $wallet_amount_after,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "cancelBet":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $betTransaction = $this->checkTransactionHistory('bet', $element);
-                            if ($betTransaction) {
-                                $cancelBetTransaction = $this->checkTransactionHistory('cancelBet', $element);
-                                if (!$cancelBetTransaction) {
-                                    $wallet_amount_after = $wallet_amount_after + $betTransaction->betAmount;
-
-                                    User::where('username', $element['userId'])->update([
-                                        'main_wallet' => $wallet_amount_after
-                                    ]);
-                                    Log::info([
-                                        'action' => $action,
-                                        'wallet_amount_before' => $wallet_amount_before,
-                                        'wallet_amount_after' => $wallet_amount_after,
-                                        'element' => $element,
-                                        'message' => $message,
-                                    ]);
-                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                        throw new \Exception('Fail (System Error)', 9999);
-                                    }
-                                }
-                            } else {
-                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                    throw new \Exception('Fail (System Error)', 9999);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "balance" => $wallet_amount_after,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "voidBet":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $betTransaction = $this->checkTransactionHistory('bet', $element);
-                            if ($betTransaction) {
-                                if ($element["betAmount"] == $betTransaction->betAmount) {
-                                    $voidBetTransaction = $this->checkTransactionHistory('voidBet', $element);
-                                    if (!$voidBetTransaction) {
-                                        $wallet_amount_after = $wallet_amount_after + $element["betAmount"];
-
-                                        User::where('username', $element['userId'])->update([
-                                            'main_wallet' => $wallet_amount_after
-                                        ]);
-
-                                        if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                            throw new \Exception('Fail (System Error)', 9999);
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "unvoidBet":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $voidBetTransaction = $this->checkTransactionHistory('voidBet', $element);
-                            if ($voidBetTransaction) {
-                                $unVoidBetTransaction = $this->checkTransactionHistory('unvoidBet', $element);
-                                if (!$unVoidBetTransaction) {
-                                    $wallet_amount_after = $wallet_amount_after - $voidBetTransaction->betAmount;
-
-                                    User::where('username', $element['userId'])->update([
-                                        'main_wallet' => $wallet_amount_after
-                                    ]);
-
-                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                        throw new \Exception('Fail (System Error)', 9999);
-                                    }
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "adjustBet":;
-                try {
-                    $username = !empty($message["userId"]) ? $message["userId"] : $message["txns"][0]["userId"];
-                    $userWallet = User::select('main_wallet')->where('username', $username)->first();
-                    if ($userWallet) {
-                        $main_wallet = $userWallet->main_wallet;
-                    } else {
-                        throw new \Exception('Invalid user Id', 1000);
-                    }
-                    return [
-                        "balance" => $main_wallet,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "settle":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $settleTransaction = $this->checkTransactionHistory('settle', $element);
-                            if ($settleTransaction) {
-                                $lastAction = $this->checkTransactionHistory('', $element);
-                                if ($lastAction->action == "unsettle") {
-                                    $settleTransaction = false; /// re settle
-                                }
-                            }
-
-                            if (!$settleTransaction) {
-                                $wallet_amount_after = $wallet_amount_after + $element["winAmount"];
-
-                                User::where('username', $element['userId'])->update([
-                                    'main_wallet' => $wallet_amount_after
-                                ]);
-
-                                Log::info([
-                                    "action" => $action,
-                                    "userWallet" => $userWallet,
-                                    "wallet_amount_before" => $wallet_amount_before,
-                                    "wallet_amount_after" => $wallet_amount_after,
-                                ]);
-                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                    throw new \Exception('Fail (System Error)', 9999);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "unsettle":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $settleTransaction = $this->checkTransactionHistory('settle', $element);
-                            if ($settleTransaction) {
-                                if ($element["betAmount"] == $settleTransaction->betAmount) {
-                                    $unSettleTransaction = $this->checkTransactionHistory('unsettle', $element);
-
-                                    if ($unSettleTransaction) {
-                                        $lastAction = $this->checkTransactionHistory('', $element);
-                                        if ($lastAction->action == "settle") {
-                                            $unSettleTransaction = false; /// re settle
-                                        }
-                                    }
-
-                                    if (!$unSettleTransaction) {
-                                        $wallet_amount_after = $wallet_amount_after - $settleTransaction->winAmount;
-
-                                        User::where('username', $element['userId'])->update([
-                                            'main_wallet' => $wallet_amount_after
-                                        ]);
-
-                                        if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                            throw new \Exception('Fail (System Error)', 9999);
-                                        }
-                                    }
-                                } else {
-                                    throw new \Exception('Invalid amount', 1010);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "voidSettle":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $settleTransaction = $this->checkTransactionHistory('settle', $element);
-                            if ($settleTransaction) {
-                                if ($element["betAmount"] == $settleTransaction->betAmount) {
-                                    $voidSettleTransaction = $this->checkTransactionHistory('voidSettle', $element);
-
-                                    if ($voidSettleTransaction) {
-                                        $lastAction = $this->checkTransactionHistory('', $element);
-                                        if ($lastAction->action == "settle") {
-                                            $voidSettleTransaction = false; /// re settle
-                                        }
-                                    }
-
-                                    if (!$voidSettleTransaction) {
-                                        $wallet_amount_after = $wallet_amount_after - $settleTransaction->winAmount + $element["betAmount"];
-
-                                        User::where('username', $element['userId'])->update([
-                                            'main_wallet' => $wallet_amount_after
-                                        ]);
-
-                                        if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                            throw new \Exception('Fail (System Error)', 9999);
-                                        }
-                                    }
-                                } else {
-                                    throw new \Exception('Invalid amount', 1010);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "unvoidSettle":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $voidSettleTransaction = $this->checkTransactionHistory('voidSettle', $element);
-                            if ($voidSettleTransaction) {
-                                $unvoidSettleTransaction = $this->checkTransactionHistory('unvoidSettle', $element);
-
-                                if ($unvoidSettleTransaction) {
-                                    $lastAction = $this->checkTransactionHistory('', $element);
-                                    if ($lastAction->action == "voidSettle") {
-                                        $voidSettleTransaction = false; /// re settle
-                                    }
-                                }
-
-                                if (!$unvoidSettleTransaction) {
-                                    $wallet_amount_after = $wallet_amount_after + $voidSettleTransaction->winAmount - $element["betAmount"];
-
-                                    User::where('username', $element['userId'])->update([
-                                        'main_wallet' => $wallet_amount_after
-                                    ]);
-
-                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                        throw new \Exception('Fail (System Error)', 9999);
-                                    }
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "betNSettle":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            if ($wallet_amount_before < $element["betAmount"]) {
-                                throw new \Exception('Not Enough Balance', 1018);
-                            } else if ($element["betAmount"] != $element["winAmount"]) {
-                                $betNSettleTransaction = $this->checkTransactionHistory('betNSettle', $element);
-                                if (!$betNSettleTransaction) {
-                                    $wallet_amount_after = $wallet_amount_after - $element["betAmount"] + $element["winAmount"];
-
-                                    User::where('username', $element['userId'])->update([
-                                        'main_wallet' => $wallet_amount_after
-                                    ]);
-
-                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                        throw new \Exception('Fail (System Error)', 9999);
-                                    }
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "balance" => $wallet_amount_after,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "cancelBetNSettle":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            if ($element["betAmount"] != $element["winAmount"]) {
-                                $cancelBetNSettle = $this->checkTransactionHistory('cancelBetNSettle', $element);
-                                if (!$cancelBetNSettle) {
-                                    $wallet_amount_after = $wallet_amount_after - $element["betAmount"] - $element["winAmount"];
-
-                                    User::where('username', $element['userId'])->update([
-                                        'main_wallet' => $wallet_amount_after
-                                    ]);
-
-                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                        throw new \Exception('Fail (System Error)', 9999);
-                                    }
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "balance" => $wallet_amount_after,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "freeSpin":;
-                return [
-                    'status' => '0000'
+        // Log::debug($request);
+        if (isset($request->token)) {
+            $member = User::where('token', '=', $request->token)->first();
+            // Log::debug($member);
+            if ($member) {
+                $mResponse =  [
+                    'Username' => $member->username,
+                    'Balance' => number_format((float) $member->main_wallet, 2, '.', ''),
+                    'Message' => 'Success',
+                    'Status' => 0,
                 ];
-                break;
-            case "give":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $give = $this->checkTransactionHistory('give', $element);
-                            if (!$give) {
-                                $wallet_amount_after = $wallet_amount_after + $element["amount"];
-
-                                User::where('username', $element['userId'])->update([
-                                    'main_wallet' => $wallet_amount_after
-                                ]);
-
-                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                    throw new \Exception('Fail (System Error)', 9999);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "balance" => $wallet_amount_after,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000",
-                        "desc" => "success",
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "tip":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $tip = $this->checkTransactionHistory('tip', $element);
-                            if (!$tip) {
-                                $wallet_amount_after = $wallet_amount_after - $element["tip"];
-
-                                User::where('username', $element['userId'])->update([
-                                    'main_wallet' => $wallet_amount_after
-                                ]);
-
-                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                    throw new \Exception('Fail (System Error)', 9999);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "balance" => $wallet_amount_after,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000",
-                        "desc" => "success",
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "cancelTip":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $tip = $this->checkTransactionHistory('tip', $element);
-                            if ($tip) {
-                                $cancelTip = $this->checkTransactionHistory('cancelTip', $element);
-                                if (!$cancelTip) {
-                                    $wallet_amount_after = $wallet_amount_after + $tip->betAmount;
-
-                                    User::where('username', $element['userId'])->update([
-                                        'main_wallet' => $wallet_amount_after
-                                    ]);
-
-                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                        throw new \Exception('Fail (System Error)', 9999);
-                                    }
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "balance" => $wallet_amount_after,
-                        "balanceTs" => $this->tsDateISOString(),
-                        "status" => "0000",
-                        "desc" => "success",
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            default:;
-                return [
-                    'status' => '9999',
-                    'desc' => 'Fail (some data not found)'
-                ];
-                break;
-        }
-    }
-    private function checkTransactionHistory($action, $payload)
-    {
-        $platformTxId = !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"];
-
-        $sexyGame = SexyGame::where('platform', '=', $payload['platform'])
-            ->where('username', '=', $payload['userId']);
-        if ($action) {
-            $sexyGame = $sexyGame->where('action', $action);
-        }
-
-        if ($action == "settle") {
-            if ($payload["settleType"] == "roundId") {
-                $sexyGame = $sexyGame->where('roundId', '=', $payload["roundId"]);
+                // Log::alert($mResponse);
+                return $mResponse;
             } else {
-                $sexyGame = $sexyGame->where('platformTxId', '=', $platformTxId);
+                return [
+                    'Username' => 'null',
+                    'Balance' => 0,
+                    'Message' => 'Invalid Token',
+                    'Status' => 3,
+                ];
             }
         } else {
-            $sexyGame = $sexyGame->where('platformTxId', '=', $platformTxId);
+            return [
+                'Username' => 'null',
+                'Balance' => 0,
+                'Message' => 'Invalid Parameters',
+                'Status' => 4,
+            ];
         }
-        $sexyGame = $sexyGame->orderByDesc('id')->first();
-        // Log::debug($sexyGame);
-        return $sexyGame;
     }
 
-    private function savaTransaction($wallet_amount_before, $wallet_amount_after, $payload, $body)
-    {
-        $betAmount = 0;
-        if (!empty($payload["betAmount"])) {
-            $betAmount = $payload["betAmount"];
-        } else if (!empty($payload["tip"])) {
-            $betAmount = $payload["tip"];
-        }
 
-        $platformTxId = !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"];
+    public function getbalance(Request $request)
+    {
+        // Log::alert("==============>getbalance");
+        // Log::debug($request);
+        if (isset($request->username)) {
+            $member = User::where('username', '=', $request->username)->first();
+            if ($member) {
+                return [
+                    'Balance' => number_format((float) $member->main_wallet, 2, '.', ''),
+                    'Message' => 'Success',
+                    'Status' => 0,
+                ];
+            } else {
+                return  [
+                    'Balance' => 0.0,
+                    'Message' => 'Invalid Username',
+                    'Status' => 7,
+                ];
+            }
+        } else {
+            return [
+                'Balance' => 0.0,
+                'Message' => 'Invalid Parameters',
+                'Status' => 4,
+            ];
+        }
+    }
+
+
+    public function bet(Request $request)
+    {
+        // Log::alert("==============>bet");
+        // Log::debug($request);
+
+        $username = $request->username;
+        $amount = $request->amount;
+        $roundid = $request->roundid;
+        $txnRefId = $request->id;
+
+        DB::beginTransaction();
         try {
-            $sexyGame = new SexyGame();
-            $sexyGame->username = $payload["userId"];
-            $sexyGame->action = $body["action"];
-            $sexyGame->wallet_amount_before = $wallet_amount_before;
-            $sexyGame->wallet_amount_after = $wallet_amount_after;
-            $sexyGame->gameType = !empty($payload["gameType"]) ? $payload["gameType"] : null;
-            $sexyGame->gameName = !empty($payload["gameName"]) ? $payload["gameName"] : null;
-            $sexyGame->gameCode = !empty($payload["gameCode"]) ? $payload["gameCode"] : null;
-            $sexyGame->platform = $payload["platform"];
-            $sexyGame->platformTxId = $platformTxId;
-            $sexyGame->roundId =  !empty($payload["roundId"]) ? $payload["roundId"] : null;
-            $sexyGame->betType =  !empty($payload["betType"]) ? $payload["betType"] : null;
-            $sexyGame->betTime =  !empty($payload["betTime"]) ? $payload["betTime"] : null;
-            $sexyGame->betAmount =  $betAmount;
-            $sexyGame->winAmount = !empty($payload["winAmount"]) ? $payload["winAmount"] : 0;
-            $sexyGame->turnover = !empty($payload["turnover"]) ? $payload["turnover"] : 0;
-            $sexyGame->gameInfo = !empty($payload["gameInfo"]) ? json_encode($payload["gameInfo"]) : null;
-            // $sexyGame->log_reqs = json_encode($body);
-            $sexyGame->save();
-            return $sexyGame->id;
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+
+            $response_msg = "Success";
+            if ($wallet_amount_before > 0 && $wallet_amount_before >= $amount) {
+                //CancelBet before bet 
+                $cancelBet_transaction = Joker::select('id')->where('action', 'cancelBet')
+                    ->where('roundId', $roundid)
+                    ->where('txnRefId', "Cancel:{$txnRefId}")
+                    ->orderByDesc('id')->first();
+                if (!$cancelBet_transaction) {
+                    $check_transaction = Joker::select('id')->where('action', 'bet')
+                        ->where('roundId', $roundid)
+                        ->where('txnRefId', $txnRefId)
+                        ->orderByDesc('id')->first();
+                    if (!$check_transaction) {
+                        $wallet_amount_after = $wallet_amount_after - $amount;
+                        User::where('username', $username)->update([
+                            'main_wallet' => $wallet_amount_after
+                        ]);
+                        /// save log 
+                        $logres = $this->savaTransaction("bet", $wallet_amount_before, $wallet_amount_after, $request);
+                        if (!$logres) {
+                            throw new \Exception('Fail (System Error)', 1000);
+                        }
+                    } else {
+                        $response_msg = "The Bet already existed";
+                    }
+                }
+            }
+
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => $response_msg,
+                'Status' => 0,
+            ];
         } catch (\Exception $e) {
-            echo $e;
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+
+    public function cancelBet(Request $request)
+    {
+        // Log::alert("==============>cancelBet");
+        // Log::debug($request);
+
+        $username = $request->username;
+        $roundid = $request->roundid;
+        $betid = $request->betid;
+        $cancelBetid = $request->id;
+
+        DB::beginTransaction();
+        try {
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+            $response_msg = "Success";
+
+            $transaction_bet = Joker::select('id', 'amount')->where('action', 'bet')
+                ->where('txnRefId', $betid)
+                ->where('roundId', $roundid)
+                ->first();
+            if ($transaction_bet) {
+                $check_transaction = Joker::select('id')->where('action', 'cancelBet')
+                    ->where('txnRefId', $cancelBetid)
+                    ->where('roundId', $roundid)
+                    ->first();
+                if (!$check_transaction) {
+                    $wallet_amount_after = $wallet_amount_after + $transaction_bet->amount;
+                    User::where('username', $username)->update([
+                        'main_wallet' => $wallet_amount_after
+                    ]);
+                    /// save log 
+                    $logres = $this->savaTransaction("cancelBet", $wallet_amount_before, $wallet_amount_after, $request);
+                    if (!$logres) {
+                        throw new \Exception('Fail (System Error)', 1000);
+                    }
+                } else {
+                    $response_msg = "The CancelBet already existed";
+                }
+            } else {
+                /// save log 
+                $logres = $this->savaTransaction("cancelBet", $wallet_amount_before, $wallet_amount_after, $request);
+                if (!$logres) {
+                    throw new \Exception('Fail (System Error)', 1000);
+                }
+            }
+
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => $response_msg,
+                'Status' => 0,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+
+    public function settle(Request $request)
+    {
+        // Log::alert("==============>settle");
+        // Log::debug($request);
+        $username = $request->username;
+        $amount = $request->amount;
+        $roundid = $request->roundid;
+
+        DB::beginTransaction();
+        try {
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+
+            $check_transaction_bet = Joker::select('id')->where('action', 'bet')
+                ->where('roundId', $roundid)
+                ->orderByDesc('id')->first();
+
+            if ($check_transaction_bet) {
+                $check_transaction = Joker::select('id')->where('action', 'settle')
+                    ->where('roundId', $roundid)->orderByDesc('id')->first();
+                if (!$check_transaction) {
+                    $wallet_amount_after = $wallet_amount_after + $amount;
+                    User::where('username', $username)->update([
+                        'main_wallet' => $wallet_amount_after
+                    ]);
+                    /// save log 
+                    $logres = $this->savaTransaction("settle", $wallet_amount_before, $wallet_amount_after, $request);
+                    if (!$logres) {
+                        throw new \Exception('Fail (System Error)', 1000);
+                    }
+                }
+            }
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => 'Success',
+                'Status' => 0,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+
+
+    public function bonusWin(Request $request)
+    {
+        // Log::alert("==============>bonusWin");
+        // Log::debug($request);
+        $username = $request->username;
+        $amount = $request->amount;
+        $roundid = $request->roundid;
+
+        DB::beginTransaction();
+        try {
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+
+
+            $check_transaction = Joker::select('id')->where('action', 'bonusWin')
+                ->where('roundId', $roundid)->orderByDesc('id')->first();
+
+            if (!$check_transaction) {
+                $wallet_amount_after = $wallet_amount_after + $amount;
+                User::where('username', $username)->update([
+                    'main_wallet' => $wallet_amount_after
+                ]);
+                /// save log 
+                $logres = $this->savaTransaction("bonusWin", $wallet_amount_before, $wallet_amount_after, $request);
+                if (!$logres) {
+                    throw new \Exception('Fail (System Error)', 1000);
+                }
+            }
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => 'Success',
+                'Status' => 0,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+
+    public function jackpotWin(Request $request)
+    {
+        // Log::alert("==============>jackpotWin");
+        // Log::debug($request);
+
+        $username = $request->username;
+        $amount = $request->amount;
+        $roundid = $request->roundid;
+
+        DB::beginTransaction();
+        try {
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+
+            $check_transaction = Joker::select('id')->where('action', 'jackpotWin')
+                ->where('roundId', $roundid)->orderByDesc('id')->first();
+            if (!$check_transaction) {
+                $wallet_amount_after = $wallet_amount_after + $amount;
+                User::where('username', $username)->update([
+                    'main_wallet' => $wallet_amount_after
+                ]);
+                /// save log 
+                $logres = $this->savaTransaction("jackpotWin", $wallet_amount_before, $wallet_amount_after, $request);
+                if (!$logres) {
+                    throw new \Exception('Fail (System Error)', 1000);
+                }
+            }
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => 'Success',
+                'Status' => 0,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+    public function withdraw(Request $request)
+    {
+        // Log::alert("==============>withdraw");
+        // Log::debug($request);
+
+        $username = $request->username;
+        $amount = $request->amount;
+        $txnRefId = $request->id;
+
+        DB::beginTransaction();
+        try {
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+
+            if ($wallet_amount_before > 0 && $wallet_amount_before >= $amount) {
+                $check_transaction = Joker::select('id')->where('action', 'withdraw')
+                    ->where('txnRefId', $txnRefId)->orderByDesc('id')->first();
+
+                if (!$check_transaction) {
+                    $wallet_amount_after = $wallet_amount_after - $amount;
+                    User::where('username', $username)->update([
+                        'main_wallet' => $wallet_amount_after
+                    ]);
+                    /// save log 
+                    $logres = $this->savaTransaction("withdraw", $wallet_amount_before, $wallet_amount_after, $request);
+                    if (!$logres) {
+                        throw new \Exception('Fail (System Error)', 1000);
+                    }
+                }
+            } else {
+                DB::commit();
+                return [
+                    'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                    'Message' => 'Insufficient Balance',
+                    'Status' => 100,
+                ];
+            }
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => 'Success',
+                'Status' => 0,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+    public function deposit(Request $request)
+    {
+        // Log::alert("==============>deposit");
+        // Log::debug($request);
+
+        $username = $request->username;
+        $amount = $request->amount;
+        $txnRefId = $request->id;
+
+        DB::beginTransaction();
+        try {
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+
+            $check_transaction = Joker::select('id')->where('action', 'deposit')
+                ->where('txnRefId', $txnRefId)->orderByDesc('id')->first();
+
+            if (!$check_transaction) {
+                $wallet_amount_after = $wallet_amount_after + $amount;
+                User::where('username', $username)->update([
+                    'main_wallet' => $wallet_amount_after
+                ]);
+                /// save log 
+                $logres = $this->savaTransaction("deposit", $wallet_amount_before, $wallet_amount_after, $request);
+                if (!$logres) {
+                    throw new \Exception('Fail (System Error)', 1000);
+                }
+            }
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => 'Success',
+                'Status' => 0,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+    public function transaction(Request $request)
+    {
+        // Log::alert("==============>transaction");
+        // Log::debug($request);
+        $username = $request->username;
+        $amount = $request->amount;
+        $roundid = $request->roundid;
+
+        DB::beginTransaction();
+        try {
+            $userWallet = User::where('username', $username)->lockForUpdate()->first();
+            if (!$userWallet) {
+                throw new \Exception('Invalid Username', 7);
+            }
+            $wallet_amount_before = $userWallet->main_wallet;
+            $wallet_amount_after = $userWallet->main_wallet;
+
+            $check_transaction = Joker::select('id')->where('action', 'transaction')
+                ->where('roundid', $roundid)->orderByDesc('id')->first();
+
+            if (!$check_transaction) {
+                /// save log 
+                $logres = $this->savaTransaction("transaction", $wallet_amount_before, $wallet_amount_after, $request);
+                if (!$logres) {
+                    throw new \Exception('Fail (System Error)', 1000);
+                }
+            }
+            DB::commit();
+            return [
+                'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
+                'Message' => 'Success',
+                'Status' => 0,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'Balance' => 0.0,
+                'Message' => $e->getMessage(),
+                'Status' => $e->getCode(),
+            ];
+        }
+    }
+
+
+    private function savaTransaction($action, $wallet_amount_before, $wallet_amount_after, $payload)
+    {
+        try {
+            $transaction  = new Joker();
+            $transaction->action = $action;
+            $transaction->wallet_amount_before = $wallet_amount_before;
+            $transaction->wallet_amount_after = $wallet_amount_after;
+            $transaction->username = $payload->username;
+            $transaction->amount = $payload->amount;
+            $transaction->appid = $payload->appid;
+            $transaction->description = $payload->description;
+            $transaction->gamecode = $payload->gamecode;
+            $transaction->txnRefId = $payload->id;
+            $transaction->roundid = $payload->roundid;
+            $transaction->timestamp = $this->formatMilliSecondToDateTime($payload->timestamp, 7);
+            $transaction->type = $payload->type;
+            if ($transaction->save()) {
+                return $transaction;
+            }
+        } catch (\Exception $e) {
+            // echo $e;
             return false;
         }
+    }
+    private function formatMilliSecondToDateTime($millisecond, $n = 0)
+    {
+        $second = $millisecond / 1000 + ((60 * 60) * $n);
+        return date("Y-m-d H:i:s", $second);
     }
 }
