@@ -10,6 +10,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
 
 class JokerController extends Controller
 {
@@ -39,6 +41,13 @@ class JokerController extends Controller
         $postData = $array;
         $postData['Hash'] = $hash;
         return $postData;
+    }
+
+    public function devdev(Request $request)
+    {
+        // $rawData =  "appid=TFJN&timestamp=1591948666039&username=S1688000083n3hioot5guhc";
+        // return  $bodyContent = $request->getContent();
+        // return md5($rawData);
     }
 
     public function index()
@@ -92,11 +101,41 @@ class JokerController extends Controller
         }
     }
 
+    public function validateSignature($payload)
+    {
+        $signature = $payload;
+        $signature['secretKey'] = $this->SecretKey;
+        function ksort_recursive(&$array)
+        {
+            ksort($array);
+            foreach ($array as &$a) {
+                is_array($a) && ksort_recursive($a);
+            }
+        }
+        ksort_recursive($signature);
+        return http_build_query($signature);
+    }
+
 
     public function getbalance(Request $request)
     {
         // Log::alert("==============>getbalance");
         // Log::debug($request);
+        $hasSignature = $this->encryptBody(array(
+            "appid" => $request->appid,
+            "timestamp" => $request->timestamp,
+            "username" => $request->username,
+        ));
+        // return  $bodyContent = $request->getContent();
+        // return $hasSignature["Hash"];
+        if ($hasSignature["Hash"] != $request->hash) {
+            return [
+                'Balance' => 0.0,
+                'Message' => 'InvalidSignature',
+                'Status' => 5,
+            ];
+        }
+
         if (isset($request->username)) {
             $member = User::where('username', '=', $request->username)->first();
             if ($member) {
@@ -126,6 +165,25 @@ class JokerController extends Controller
     {
         // Log::alert("==============>bet");
         // Log::debug($request);
+
+        $hasSignature = $this->encryptBody(array(
+            "amount" => $request->amount,
+            "appid" => $request->appid,
+            "gamecode" => $request->gamecode,
+            "id" => $request->id,
+            "roundid" => $request->roundid,
+            "timestamp" => $request->timestamp,
+            "username" => $request->username,
+        ));
+        // return  $bodyContent = $request->getContent();
+        // return $hasSignature["Hash"];
+        if ($hasSignature["Hash"] != $request->hash) {
+            return [
+                'Balance' => 0.0,
+                'Message' => 'InvalidSignature',
+                'Status' => 5,
+            ];
+        }
 
         $username = $request->username;
         $amount = $request->amount;
