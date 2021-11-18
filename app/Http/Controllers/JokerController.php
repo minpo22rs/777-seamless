@@ -5,19 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Joker;
-use Carbon\Carbon;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-
 
 class JokerController extends Controller
 {
+    private $lobbyURL = "https://nasavg.com/play/joker";
     private $host = "http://api688.net/seamless";
+    // Dev
     private $AppID = "TGFV";
     private $SecretKey = "qc8y9k63x55wr";
+    // Prod
+    // private $AppID = "F5K5M";
+    // private $SecretKey = "wzqjkthq8bbje";
 
     private function encryptBody($array_params)
     {
@@ -48,6 +48,12 @@ class JokerController extends Controller
         // $rawData =  "appid=TFJN&timestamp=1591948666039&username=S1688000083n3hioot5guhc";
         // return  $bodyContent = $request->getContent();
         // return md5($rawData);
+    }
+
+    public function play($username, $gameCode)
+    {
+        $url = "https://www.gwc688.net/PlayGame?token=$username&appid={$this->AppID}&gameCode=$gameCode&language=en&mobile=false&redirectUrl={$this->lobbyURL}";
+        return redirect($url);
     }
 
     public function index()

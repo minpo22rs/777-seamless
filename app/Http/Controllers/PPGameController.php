@@ -4,21 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\PPGame;
-use Carbon\Carbon;
+use App\Models\Constant;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-
 
 class PPGameController extends Controller
 {
     //
-    private $hostGame = "https://tg168.prerelease-env.biz";
-    private $host = "https://api.prerelease-env.biz/IntegrationService/v3/http/CasinoGameAPI";
-    private $secureLogin = "tg168_zap88";
-    private $SecretKey = "testKey";
+    private $hostGame = "https://tg168-sg0.ppgames.net";
+    private $host = "https://api-sg0.ppgames.net/IntegrationService/v3/http/CasinoGameAPI";
+    private $secureLogin = "tg168_nasavg";
+    private $SecretKey = "D08b2bD268214a0c";
     private $currencyCode = "THB";
 
     private function encryptBody($queryString)
@@ -33,15 +31,7 @@ class PPGameController extends Controller
         $key = $this->encryptBody($queryString);
         try {
             $client = new Client();
-            $res = $client->request("POST", "{$this->host}/getCasinoGames?secureLogin={$this->secureLogin}&hash={$key}", [
-                // "form_params" => [
-                //     "secureLogin" =>  "tg168_zap88",
-                //     "hash" =>  $key,
-                // ]
-            ]);
-            // echo $res->getStatusCode();
-            // echo $res->getHeader("content-type")[0];
-            // echo $res->getBody();
+            $res = $client->request("POST", "{$this->host}/getCasinoGames?secureLogin={$this->secureLogin}&hash={$key}", []);
             $response = $res->getBody();
             return $response;
         } catch (\Exception $e) {
@@ -49,9 +39,9 @@ class PPGameController extends Controller
         }
     }
 
-    public function login($username, $gameId)
+    public function login($userToken, $gameId)
     {
-        $user = User::where('username', $username)->first();
+        $user = User::where('token', $userToken)->first();
         if (empty($user)) {
             $response = ["message" => "Oops! The user does not exist"];
             return response($response, 401);
@@ -59,7 +49,7 @@ class PPGameController extends Controller
         }
         $userToken = $user->token;
 
-        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=en&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://zap88.com/seamless/pp/dev");
+        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=th&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://nasavg.com/lobby/pp");
 
         $url = "{$this->hostGame}/gs2c/playGame.do?key={$urlValue}&stylename={$this->secureLogin}";
         return redirect($url);
@@ -145,6 +135,31 @@ class PPGameController extends Controller
             $wallet_amount_before = $userWallet->main_wallet;
             $wallet_amount_after = $userWallet->main_wallet;
             $transactionId = 0;
+
+            // จ่ายคืนยอดเสีย
+            if ($userWallet->is_promotion == 0) {
+                $percentRefund = Constant::where('variable', 'PERCENT_REFUND')->first()->value;
+                $userWallet->refund_wallet = $userWallet->refund_wallet + ($amount * $percentRefund / 100);
+            }
+            $userWallet->turnover = $userWallet->turnover + $amount;
+            $userWallet->save();
+            // จ่าย AFF
+            if ($userWallet->invitor_token) {
+                $invitor = User::where('token', $userWallet->invitor_token)->lockForUpdate()->first();
+                if ($invitor) {
+                    $percentAffiliate = Constant::where('variable', 'PERCENT_AFFILIATE')->first()->value;
+                    $invitor->aff_wallet = $invitor->aff_wallet + ($amount * $percentAffiliate / 100);
+                    $invitor->save();
+                    if ($invitor->invitor_token) {
+                        $children = User::where('token', $invitor->invitor_token)->lockForUpdate()->first();
+                        if ($children) {
+                            $percentAffiliateStep2 = Constant::where('variable', 'PERCENT_AFFILIATE_STEP_2')->first()->value;
+                            $children->aff_wallet = $children->aff_wallet + ($amount * $percentAffiliateStep2 / 100);
+                            $children->save();
+                        }
+                    }
+                }
+            }
 
             if ($wallet_amount_before > $amount) {
                 $betTransaction  = PPGame::select('id')
@@ -247,7 +262,7 @@ class PPGameController extends Controller
                         throw new \Exception('Fail (System Error)', 120);
                     }
                     $transactionId = $transactionLog->id;
-                }else {
+                } else {
                     $transactionId = $cancelBetTransaction->id;
                 }
             }
@@ -307,7 +322,7 @@ class PPGameController extends Controller
                 ->first();
 
             if (!$settleTransaction) {
-                $wallet_amount_after = $wallet_amount_after + $amount+$promoWinAmount;
+                $wallet_amount_after = $wallet_amount_after + $amount + $promoWinAmount;
 
                 User::where('username', $username)->update([
                     'main_wallet' => $wallet_amount_after
@@ -319,7 +334,7 @@ class PPGameController extends Controller
                     throw new \Exception('Fail (System Error)', 120);
                 }
                 $transactionId = $transactionLog->id;
-            }else {
+            } else {
                 $transactionId = $settleTransaction->id;
             }
 
@@ -365,12 +380,12 @@ class PPGameController extends Controller
         $transactionId = 0;
 
         $bonusWinTransaction  = PPGame::select('id')
-        ->where('action', '=', 'bonusWin')
-        ->where('reference', '=', $reference)
-        ->where('providerId', '=', $providerId)
-        ->where('username', '=', $username)
-        ->orderByDesc('id')
-        ->first();
+            ->where('action', '=', 'bonusWin')
+            ->where('reference', '=', $reference)
+            ->where('providerId', '=', $providerId)
+            ->where('username', '=', $username)
+            ->orderByDesc('id')
+            ->first();
 
         if (!$bonusWinTransaction) {
             $transactionLog = $this->savaTransaction('bonusWin', $main_wallet, $main_wallet, $request, $username);
@@ -380,11 +395,11 @@ class PPGameController extends Controller
                     "description" => "Fail (System Error)"
                 ];
             }
-             $transactionId = $transactionLog->id;
-        }else {
+            $transactionId = $transactionLog->id;
+        } else {
             $transactionId = $bonusWinTransaction->id;
         }
-       
+
         return [
             "error" => 0,
             "description" => "Success",
@@ -444,7 +459,7 @@ class PPGameController extends Controller
                     throw new \Exception('Fail (System Error)', 120);
                 }
                 $transactionId = $transactionLog->id;
-            }else {
+            } else {
                 $transactionId = $jackpotWinTransaction->id;
             }
             DB::commit();
@@ -517,7 +532,7 @@ class PPGameController extends Controller
                     throw new \Exception('Fail (System Error)', 120);
                 }
                 $transactionId = $transactionLog->id;
-            }else {
+            } else {
                 $transactionId = $promoWinTransaction->id;
             }
             DB::commit();
@@ -548,7 +563,7 @@ class PPGameController extends Controller
             $transaction->wallet_amount_after = $wallet_amount_after;
             $transaction->username = $username;
             $transaction->amount = $payload->amount;
-            $transaction->promoWinAmount = !empty($payload->promoWinAmount)? $payload->promoWinAmount:0;
+            $transaction->promoWinAmount = !empty($payload->promoWinAmount) ? $payload->promoWinAmount : 0;
             $transaction->gameId = $payload->gameId;
             $transaction->hash = $payload->hash;
             $transaction->providerId = $payload->providerId;

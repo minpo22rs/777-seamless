@@ -10,14 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\Constant;
 
 date_default_timezone_set('America/New_York');
 class JiliGamController extends Controller
 {
     //
-    private $host = "https://uat-wb-api.jlfafafa2.com";
+    private $host = "https://wb-api.jlfafafa2.com";
     private $agentId = "ZF084_NasaVG";
-    private $agentKey = "9619530419d418d8cbdd437e381d67e440c9ce5d";
+    private $agentKey = "8fc9781160422a4caae0e18107e4e27f41f287aa";
     private $currencyCode = "THB";
     private $gameLang = "en-US";
 
@@ -58,9 +59,10 @@ class JiliGamController extends Controller
         }
     }
 
-    public function login($username, $gameId)
+    public function login($userToken)
     {
-        $user = User::where('username', $username)->first();
+        $gameId = 80;
+        $user = User::where('token', $userToken)->first();
         if (empty($user)) {
             $response = ["message" => "Oops! The user does not exist"];
             return response($response, 401);
@@ -157,6 +159,32 @@ class JiliGamController extends Controller
                 $bet = $this->checkTransactionHistory('bet', $token, $reqId);
                 if (!$bet) {
                     $wallet_amount_after = $wallet_amount_after - $betAmount + $winloseAmount;
+
+                    // จ่ายคืนยอดเสีย
+                    if($userWallet->is_promotion == 0) {
+                        $percentRefund = Constant::where('variable', 'PERCENT_REFUND')->first()->value;
+                        $userWallet->refund_wallet = $userWallet->refund_wallet + ($betAmount * $percentRefund / 100);
+                    }
+                    $userWallet->turnover = $userWallet->turnover + $betAmount;
+                    $userWallet->save();
+                    // จ่าย AFF
+                    if($userWallet->invitor_token) {
+                        $invitor = User::where('token', $userWallet->invitor_token)->lockForUpdate()->first();
+                        if($invitor) {
+                            $percentAffiliate = Constant::where('variable', 'PERCENT_AFFILIATE')->first()->value;
+                            $invitor->aff_wallet = $invitor->aff_wallet + ($betAmount * $percentAffiliate / 100);
+                            $invitor->save();
+                            if($invitor->invitor_token) {
+                                $children = User::where('token', $invitor->invitor_token)->lockForUpdate()->first();
+                                if($children) {
+                                    $percentAffiliateStep2 = Constant::where('variable', 'PERCENT_AFFILIATE_STEP_2')->first()->value;
+                                    $children->aff_wallet = $children->aff_wallet + ($betAmount * $percentAffiliateStep2 / 100);
+                                    $children->save();
+                                }
+                            }
+                        }
+                    }
+
                     User::where('username', $username)->update([
                         'main_wallet' => $wallet_amount_after
                     ]);

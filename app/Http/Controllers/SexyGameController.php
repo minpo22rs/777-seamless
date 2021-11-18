@@ -20,8 +20,49 @@ class SexyGameController extends Controller
     private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}} ';
 
-    public function login($username)
+    public function login($username, $gameType)
     {
+        $form_params = [];
+        $method = 'login';
+        if ($gameType == 'sexy') {
+            $method = 'doLoginAndLaunchGame';
+            $form_params = [
+                'cert' =>  $this->certCode,
+                'agentId' =>  $this->agentId,
+                'userId' =>  $username,
+                'gameType' =>  'LIVE',
+                'platform' =>  'SEXYBCRT',
+                'isMobileLogin' =>  true,
+                'gameForbidden' => '{"KINGMAKER":{"ALL":["ALL"]},"RT":{"ALL":["ALL"]},"JILI":{"ALL":["ALL"]}}',
+                'hall' => 'SEXY',
+                'language' =>  $this->language,
+            ];
+        } else if ($gameType == 'rt') {
+            $form_params = [
+                'agentId' =>  $this->agentId,
+                'cert' =>  $this->certCode,
+                'userId' =>  $username,
+                'gameCode'   => '',
+                'gameType' =>  'SLOT',
+                'platform' =>  'RT',
+                'isMobileLogin' =>  true,
+                'gameForbidden' => '{"SEXYBCRT":{"ALL":["ALL"]},"KINGMAKER":{"ALL":["ALL"]},"RT":{"TABLE":["ALL"]},"JILI":{"ALL":["ALL"]}}',
+                'language' =>  $this->language,
+            ];
+        } else if ($gameType == 'km') {
+            $form_params = [
+                'agentId' =>  $this->agentId,
+                'cert' =>  $this->certCode,
+                'userId' =>  $username,
+                'gameCode'   => '',
+                'gameType' =>  'TABLE',
+                'platform' =>  'KINGMAKER',
+                'isMobileLogin' =>  true,
+                'gameForbidden' => '{"SEXYBCRT":{"ALL":["ALL"]},"RT":{"SLOT":["ALL"]},"JILI":{"SLOT":["ALL"]},"KINGMAKER":{"TABLE":["KM-TABLE-033"]}}',
+                'language' =>  $this->language,
+            ];
+        }
+
         $user = User::where('username', $username)->first();
         if (empty($user)) {
             $response = ["message" => 'Oops! The user does not exist'];
@@ -31,19 +72,8 @@ class SexyGameController extends Controller
 
         try {
             $client = new Client();
-            $res = $client->request('POST', $this->host . '/wallet/login', [
-                'form_params' => [
-                    'cert' =>  $this->certCode,
-                    'agentId' =>  $this->agentId,
-                    'userId' =>  $username,
-                    'isMobileLogin' =>  false,
-                    'externalURL' =>  'https://www.google.com.tw/',
-                    'gameForbidden' =>  '{"JDBFISH":{"FH":["ALL"]}}',
-                    'gameType' =>  'SLOT',
-                    'platform' =>  'RT',
-                    'language' =>  $this->language,
-                    'betLimit' =>  $this->betLimit,
-                ]
+            $res = $client->request('POST', $this->host . '/wallet/' . $method, [
+                'form_params' => $form_params
             ]);
             // echo $res->getStatusCode();
             // echo $res->getHeader('content-type')[0];
@@ -55,13 +85,13 @@ class SexyGameController extends Controller
                     return redirect($json->url);
                 } else if ($json->status == '1028') {
                     //1028 = Unable to proceed. please try again later
-                    return $this->login($username);
+                    return $this->login($username, $gameType);
                 } else if ($json->status == '1002') {
                     $responsenewmember = $this->createMember($username);
                     if (!$responsenewmember) {
                         return "error create member";
                     } else if ($responsenewmember->status == '0000') {
-                        return $this->login($username);
+                        return $this->login($username, $gameType);
                     } else {
                         return $responsenewmember;
                     }
