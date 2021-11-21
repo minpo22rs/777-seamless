@@ -3,7 +3,9 @@
 /** @var \Laravel\Lumen\Routing\Router $router */
 
 use App\Http\Controllers\DreamGamingController;
+use App\Http\Controllers\Rich88GameController;
 use App\Http\Controllers\SBOController;
+use App\Http\Controllers\EvolutionGameController;
 
 /*
 |--------------------------------------------------------------------------
@@ -128,4 +130,7 @@ $router->group(['prefix' => 'apiseamless'], function () use ($router) {
 
     DreamGamingController::routes();
     SBOController::routes();
+
+    Rich88GameController::routes();
+    EvolutionGameController::routes();
 });
