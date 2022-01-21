@@ -13,24 +13,24 @@ use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 use App\Classes\Payment;
 
-class EvolutionGameController extends Controller
+class DevEvolutionGameController extends Controller
 {
 
-    private $CasinoKey = "zyedebkitxegojye";
-    private $APIKey = "82db24b82a277fe9598364a7cec05a87";
-    private $HOST = "https://api.luckylivegames.com";
+    private $CasinoKey = "k0ljjn7sywnogl16";
+    private $APIKey = "4adc9bcb1e4f1eae20ce73f7a7ad8291";
+    private $HOST = "http://staging.evolution.asia-live.com";
 
 
 
     const CONTROLLER_NAME = 'EvolutionGameController';
     public static function routes()
     {
-        Route::get('/evolution/{username}', self::CONTROLLER_NAME . '@loginGame');
-        Route::post('/evolution/check', self::CONTROLLER_NAME . '@CheckUserRequest');
-        Route::post('/evolution/balance', self::CONTROLLER_NAME . '@BalanceRequest');
-        Route::post('/evolution/debit', self::CONTROLLER_NAME . '@DebitRequest');
-        Route::post('/evolution/credit', self::CONTROLLER_NAME . '@CreditRequest');
-        Route::post('/evolution/cancel', self::CONTROLLER_NAME . '@CancelRequest');
+        Route::get('/evolution/dev/{username}', self::CONTROLLER_NAME . '@loginGame');
+        Route::post('/evolution/dev/check', self::CONTROLLER_NAME . '@CheckUserRequest');
+        Route::post('/evolution/dev/balance', self::CONTROLLER_NAME . '@BalanceRequest');
+        Route::post('/evolution/dev/debit', self::CONTROLLER_NAME . '@DebitRequest');
+        Route::post('/evolution/dev/credit', self::CONTROLLER_NAME . '@CreditRequest');
+        Route::post('/evolution/dev/cancel', self::CONTROLLER_NAME . '@CancelRequest');
     }
     public function index()
     {
@@ -47,6 +47,8 @@ class EvolutionGameController extends Controller
         }
 
         $client = new Client([
+            // 'exceptions'       => false,
+            // 'verify'           => false,
             'headers'          => [
                 'Accept'   => 'application/json',
                 'Content-Type'   => 'application/json',
@@ -215,7 +217,7 @@ class EvolutionGameController extends Controller
                 'before_balance' => $wallet_amount_before,
                 'after_balance' => $wallet_amount_after,
                 'action' => 'BET',
-                'provider' => 'EVOLUTION',
+                'provider' => 'EVOLUCTION',
                 'game_type' => 'CASINO',
                 'game_ref' => $request->game["id"],
                 'transaction_ref' =>  $transaction["refId"],

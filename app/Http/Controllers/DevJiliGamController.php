@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class JiliGamController extends Controller
+
+class DevJiliGamController extends Controller
 {
     //
     private $host = "https://wb-api.jlfafafa2.com";
@@ -174,17 +175,6 @@ class JiliGamController extends Controller
             }
 
             (new Payment())->payAll($userWallet->id, $betAmount, 'SLOT');
-            (new Payment())->saveLog([
-                'amount' => $request->betAmount,
-                'before_balance' => $wallet_amount_before,
-                'after_balance' => $wallet_amount_before - $request->betAmount + $request->winloseAmount,
-                'action' => 'BET',
-                'provider' => 'JILI',
-                'game_type' => 'SLOT',
-                'game_ref' => $request->game . ' [ชนะ: ' . number_format($request->winloseAmount, 2) . ']',
-                'transaction_ref' => $request->round,
-                'player_username' => $username,
-            ]);
 
             DB::commit();
             return [

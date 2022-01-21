@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Classes\Payment;
 use App\Models\SBO;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,12 +9,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
 
-class SBOController extends Controller
+class SBODevController extends Controller
 {
-    const CONTROLLER_NAME = 'SBOController';
+    const CONTROLLER_NAME = 'SBODevController';
 
-    const API_URL = 'https://ex-api-yy.xxttgg.com';
-    const COMPANY_KEY = '150BC94D6DDF4DFC9652D8B66A2C1723';
+    const API_URL = 'https://ex-api-demo-yy.568win.com';
+    const COMPANY_KEY = 'CD35FAC44E474FF7A6E657A3575FA44E';
 
     const NO_ERROR = 0;
     const KEY_FAILED = 4;
@@ -24,7 +23,6 @@ class SBOController extends Controller
     const NOT_ENOUGHT_BALANCE = 5;
     const BET_NOT_EXIST = 6;
     const ALREADY_ROOLBACK = 2003;
-    const PREFIX = 'NVG_';
 
     protected function buildFailedValidationResponse(Request $request, $errors)
     {
@@ -33,21 +31,18 @@ class SBOController extends Controller
 
     public static function routes()
     {
-        Route::get('/sbobet', self::CONTROLLER_NAME . '@createAgent');
-        Route::get('/sbobet/update-bet-limit/{username}/{max}/{maxPerMatch}', self::CONTROLLER_NAME . '@updateBetlimit');
-        Route::get('/sbobet/update-agent-bet-limit', self::CONTROLLER_NAME . '@updateAgentBetlimit');
-        Route::get('/sbobet/get-player-bet-setting/{username}', self::CONTROLLER_NAME . '@getPlayerBetSetting');
-        Route::get('/sbobet/launch/{token}/{mode}', self::CONTROLLER_NAME . '@launch');
-        Route::post('/sbobet/GetBalance', self::CONTROLLER_NAME . '@getBalance');
-        Route::post('/sbobet/Deduct', self::CONTROLLER_NAME . '@deduct');
-        Route::post('/sbobet/Settle', self::CONTROLLER_NAME . '@settle');
-        Route::post('/sbobet/Rollback', self::CONTROLLER_NAME . '@rollback');
-        Route::post('/sbobet/Cancel', self::CONTROLLER_NAME . '@cancel');
-        Route::post('/sbobet/Tip', self::CONTROLLER_NAME . '@tip');
-        Route::post('/sbobet/Bonus', self::CONTROLLER_NAME . '@bonus');
-        Route::post('/sbobet/ReturnStake', self::CONTROLLER_NAME . '@returnStake');
-        Route::post('/sbobet/LiveCoinTransaction', self::CONTROLLER_NAME . '@deduct');
-        Route::post('/sbobet/GetBetStatus', self::CONTROLLER_NAME . '@getBetStatus');
+        Route::get('/sbobet/dev/launch/{token}', self::CONTROLLER_NAME . '@launch');
+        Route::get('/sbobet/dev', self::CONTROLLER_NAME . '@index');
+        Route::post('/sbobet/dev/GetBalance', self::CONTROLLER_NAME . '@getBalance');
+        Route::post('/sbobet/dev/Deduct', self::CONTROLLER_NAME . '@deduct');
+        Route::post('/sbobet/dev/Settle', self::CONTROLLER_NAME . '@settle');
+        Route::post('/sbobet/dev/Rollback', self::CONTROLLER_NAME . '@rollback');
+        Route::post('/sbobet/dev/Cancel', self::CONTROLLER_NAME . '@cancel');
+        Route::post('/sbobet/dev/Tip', self::CONTROLLER_NAME . '@tip');
+        Route::post('/sbobet/dev/Bonus', self::CONTROLLER_NAME . '@bonus');
+        Route::post('/sbobet/dev/ReturnStake', self::CONTROLLER_NAME . '@returnStake');
+        Route::post('/sbobet/dev/LiveCoinTransaction', self::CONTROLLER_NAME . '@deduct');
+        Route::post('/sbobet/dev/GetBetStatus', self::CONTROLLER_NAME . '@getBetStatus');
     }
 
     public function createAgent()
@@ -57,12 +52,12 @@ class SBOController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'nasavg_prod',
+            'Username' => 'nasavg_1',
             'Password' => '12345Aa',
             'Currency' => 'THB',
             'Min' => 1,
-            'Max' => 20000,
-            'MaxPerMatch' => 200000,
+            'Max' => 5000,
+            'MaxPerMatch' => 20000,
             'CasinoTableLimit' => 3,
         ];
 
@@ -70,14 +65,14 @@ class SBOController extends Controller
         return $response;
     }
 
-    public function launch($token, $mode)
+    public function launch($token)
     {
         $player = User::firstWhere('token', $token);
         if (!$player) {
             return response()->json(['message' => 'Invalid Token'], 400);
         }
 
-        $username = self::PREFIX . $player->username;
+        $username = $player->username;
         $loggedIn = $this->login($username);
         if ($loggedIn['error']['id']) {
             $registered = $this->register($username);
@@ -85,8 +80,8 @@ class SBOController extends Controller
                 $loggedIn = $this->login($username);
             }
         }
-        $mode = $mode == 'desktop' ? 'd' : 'm';
-        $launchUrl = $loggedIn['url'] . '&lang=th-th&oddstyle=MY&theme=sbo&oddsmode=double&device=' . $mode;
+
+        $launchUrl = $loggedIn['url'] . '&lang=th-th&oddstyle=MY&theme=sbo&oddsmode=double&device=d';
         return redirect($launchUrl);
     }
 
@@ -113,64 +108,10 @@ class SBOController extends Controller
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
             'Username' => $username,
-            'Agent' => 'nasavg_prod',
+            'Agent' => 'nasavg_1',
         ];
 
         $response = Http::post($url, $payload);
-        return $response;
-    }
-
-    public function getPlayerBetSetting($username)
-    {
-        $url = self::API_URL . '/web-root/restricted/player/get-member-bet-settings-with-sportid-and-markettype.aspx';
-
-        $payload = [
-            'CompanyKey' => self::COMPANY_KEY,
-            'ServerId' => (string) time(),
-            'Username' => $username,
-        ];
-
-        $response = Http::post($url, $payload);
-        return $response;
-    }
-
-    public function updateAgentBetlimit()
-    {
-        $url = self::API_URL . '/web-root/restricted/agent/update-agent-preset-bet-settings.aspx';
-
-        $payload = [
-            'CompanyKey' => self::COMPANY_KEY,
-            'ServerId' => (string) time(),
-            'Username' => 'nasavg_prod',
-            'Min' => 1,
-            'Max' => 5000,
-            'MaxPerMatch' => 20000,
-            'CasinoTableLimit' => 4
-        ];
-
-        $response = Http::post($url, $payload);
-        return $response;
-    }
-
-
-    public function updateBetlimit($username, $max, $maxPerMatch)
-    {
-        $url = self::API_URL . '/web-root/restricted/player/update-player-bet-settings.aspx';
-
-        $payload = [
-            'CompanyKey' => self::COMPANY_KEY,
-            'ServerId' => (string) time(),
-            'Username' => 'NVG_' . $username,
-            'Min' => 1,
-            'Max' => $max,
-            'MaxPerMatch' => $maxPerMatch,
-            'CasinoTableLimit' => 4
-        ];
-
-        $response = Http::post($url, $payload);
-        if ($response['error']['id'] == 0) {
-            return  ['message' => 'แก้ไข BET LIMIT สำเร็จ'];
-        }
         return $response;
     }
 
@@ -267,7 +208,7 @@ class SBOController extends Controller
         }
 
         $stake = $payload['CurrentStake'];
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
         $transfer_code = $payload['TransferCode'];
         $product_type = $payload['ProductType'];
 
@@ -326,7 +267,7 @@ class SBOController extends Controller
         }
 
         $amount = $payload['Amount'];
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
         $transfer_code = $payload['TransferCode'];
         $product_type = $payload['ProductType'];
 
@@ -384,7 +325,7 @@ class SBOController extends Controller
         }
 
         $amount = $payload['Amount'];
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
         $transfer_code = $payload['TransferCode'];
         $product_type = $payload['ProductType'];
 
@@ -443,7 +384,7 @@ class SBOController extends Controller
             return ['ErrorCode' => self::KEY_FAILED, 'ErrorMessage' => 'CompanyKey Error'];
         }
 
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
         $transfer_code = $payload['TransferCode'];
         $transaction_id = $payload['TransactionId'];
 
@@ -619,7 +560,7 @@ class SBOController extends Controller
             return ['ErrorCode' => self::KEY_FAILED, 'ErrorMessage' => 'CompanyKey Error'];
         }
 
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
         $transfer_code = $payload['TransferCode'];
 
         $player = User::firstWhere('username', $username);
@@ -741,12 +682,11 @@ class SBOController extends Controller
             return ['ErrorCode' => self::KEY_FAILED, 'ErrorMessage' => 'CompanyKey Error'];
         }
 
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
         $winloss = $payload['WinLoss'];
         $transfer_code = $payload['TransferCode'];
 
         $player = User::firstWhere('username', $username);
-        $before_balance = $player->main_wallet;
         if (!$player) {
             return ['ErrorCode' => self::ACCOUNT_NOT_EXISTS, 'ErrorMessage' => 'Member not exist'];
         }
@@ -761,19 +701,6 @@ class SBOController extends Controller
                     $trx->profit = $profit;
                     $trx->status = 'settled';
                     $trx->save();
-
-                    (new Payment())->saveLog([
-                        'amount' => $winloss,
-                        'before_balance' => $before_balance,
-                        'after_balance' => $before_balance + $winloss,
-                        'action' => 'SETTLE',
-                        'provider' => 'SBO',
-                        'game_type' => 'SPORTBOOK',
-                        'game_ref' => 'NO REFERENCE',
-                        'transaction_ref' => $transfer_code,
-                        'player_username' => $player->username,
-                    ]);
-
                     return [
                         'AccountName' => $player->username,
                         'Balance' => $player->main_wallet,
@@ -819,18 +746,6 @@ class SBOController extends Controller
                     $trx->txns_3rd_party = $Txns3RdParty;
                     $trx->status = 'settled';
                     $trx->save();
-
-                    (new Payment())->saveLog([
-                        'amount' => $winloss,
-                        'before_balance' => $before_balance,
-                        'after_balance' => $before_balance + $winloss,
-                        'action' => 'SETTLE',
-                        'provider' => 'SBO',
-                        'game_type' => 'SPORTBOOK',
-                        'game_ref' => 'NO REFERENCE',
-                        'transaction_ref' => $transfer_code,
-                        'player_username' => $player->username,
-                    ]);
 
                     return [
                         'AccountName' => $player->username,
@@ -902,14 +817,13 @@ class SBOController extends Controller
             return ['ErrorCode' => self::KEY_FAILED, 'ErrorMessage' => 'CompanyKey Error'];
         }
 
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
         $transfer_code = $payload['TransferCode'];
         $transaction_id = $payload['TransactionId'];
         $product_type = $payload['ProductType'];
         $amount = $payload['Amount'];
 
         $player = User::firstWhere('username', $username);
-        $before_balance = $player->main_wallet;
         if (!$player) {
             return ['ErrorCode' => self::ACCOUNT_NOT_EXISTS, 'ErrorMessage' => 'Member not exist'];
         }
@@ -954,19 +868,6 @@ class SBOController extends Controller
                     ];
                 }
             }
-
-            (new Payment())->payAll($player->id, $amount, 'SPORTSBOOK');
-            (new Payment())->saveLog([
-                'amount' => $amount,
-                'before_balance' => $before_balance,
-                'after_balance' => $before_balance - $amount,
-                'action' => 'BET',
-                'provider' => 'SBO',
-                'game_type' => 'SPORTBOOK',
-                'game_ref' => 'NO REFERENCE',
-                'transaction_ref' => $transfer_code . ', ' . $transaction_id,
-                'player_username' => $player->username,
-            ]);
 
             $player->decrement('main_wallet', $amount);
 
@@ -1189,7 +1090,7 @@ class SBOController extends Controller
         $this->log("Get Balance", $payload);
 
         $company_key = $payload['CompanyKey'];
-        $username = str_replace(self::PREFIX, '', $payload['Username']);
+        $username = $payload['Username'];
 
         if (!$this->verifyKey($company_key)) {
             return ['ErrorCode' => self::KEY_FAILED, 'ErrorMessage' => 'CompanyKey Error', 'Balance' => 0];

@@ -12,14 +12,14 @@ use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class SexyGameController extends Controller
+class DevSexyGameController extends Controller
 {
-    private $host = "https://api.onlinegames22.com";
-    private $certCode = "X3gyCPWqRxJ7tVAFW7T";
+    private $host = "https://tttint.onlinegames22.com";
+    private $certCode = "N19V3PqBl1QJtAyK85e";
     private $agentId = "nasavg";
     private $currencyCode = "THB";
     private $language = "th";
-    private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
+    private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}} ';
 
     public function login($username, $gameType)
     {
@@ -168,13 +168,13 @@ class SexyGameController extends Controller
 
                     return [
                         "userId" => $username,
-                        "balance" => $main_wallet,
+                        "balance" => round($main_wallet, 2),
                         "balanceTs" =>  $this->tsDateISOString(),
                         "status" => "0000"
                     ];
                 } catch (\Exception $e) {
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -201,18 +201,6 @@ class SexyGameController extends Controller
                                     ]);
 
                                     (new Payment())->payAll($userWallet->id, $element['betAmount'], 'CASINO');
-                                    $payload = $element;
-                                    (new Payment())->saveLog([
-                                        'amount' => $payload['betAmount'], 
-                                        'before_balance' => $wallet_amount_before, 
-                                        'after_balance' => $wallet_amount_before - $payload['betAmount'], 
-                                        'action' => 'BET',
-                                        'provider' => $payload["platform"],
-                                        'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
-                                        'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
-                                        'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
-                                        'player_username' => $payload['userId'],
-                                    ]);
 
                                     if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
@@ -232,17 +220,16 @@ class SexyGameController extends Controller
                             throw new \Exception('Invalid user Id', 1000);
                         }
                     }
-
                     DB::commit();
                     return [
-                        "balance" => $wallet_amount_after,
+                        "balance" => round($wallet_amount_after, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -287,14 +274,14 @@ class SexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => $wallet_amount_after,
+                        "balance" => round($wallet_amount_after, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -336,7 +323,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -376,7 +363,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -391,13 +378,13 @@ class SexyGameController extends Controller
                         throw new \Exception('Invalid user Id', 1000);
                     }
                     return [
-                        "balance" => $main_wallet,
+                        "balance" => round($main_wallet, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
                 } catch (\Exception $e) {
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -426,20 +413,6 @@ class SexyGameController extends Controller
                                     'main_wallet' => $wallet_amount_after
                                 ]);
 
-                                $payload = $element;
-                                $winloss = !empty($payload["winAmount"]) ? $payload["winAmount"] : 0;
-                                (new Payment())->saveLog([
-                                    'amount' => $winloss, 
-                                    'before_balance' => $wallet_amount_before,
-                                    'after_balance' => $wallet_amount_before + $winloss,
-                                    'action' => 'SETTLE',
-                                    'provider' => $payload["platform"],
-                                    'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
-                                    'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
-                                    'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
-                                    'player_username' => $payload['userId'],
-                                ]);
-
                                 Log::info([
                                     "action" => $action,
                                     // "userWallet" => $userWallet,
@@ -461,7 +434,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -513,7 +486,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -565,7 +538,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -613,7 +586,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -652,14 +625,14 @@ class SexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => $wallet_amount_after,
+                        "balance" => round($wallet_amount_after, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -698,14 +671,14 @@ class SexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => $wallet_amount_after,
+                        "balance" => round($wallet_amount_after, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -742,7 +715,7 @@ class SexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => $wallet_amount_after,
+                        "balance" => round($wallet_amount_after, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000",
                         "desc" => "success",
@@ -750,7 +723,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -784,7 +757,7 @@ class SexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => $wallet_amount_after,
+                        "balance" => round($wallet_amount_after, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000",
                         "desc" => "success",
@@ -792,7 +765,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -831,7 +804,7 @@ class SexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => $wallet_amount_after,
+                        "balance" => round($wallet_amount_after, 2),
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000",
                         "desc" => "success",
@@ -839,7 +812,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }

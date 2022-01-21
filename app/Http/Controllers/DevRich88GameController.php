@@ -11,26 +11,28 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 
 
-class Rich88GameController extends Controller
+class DevRich88GameController extends Controller
 {
-    private $HOST = "https://lobbycenter.ark8899.com";
-    private $PrivateKey = "D8RPX3mhiZaBM2N0WWZSAYwUmGOUXkz9";
+    private $HOST = "https://betacenter.ark8899.com";
+    private $PrivateKey = "DLUYRLliab7d2JWzhGRrAIOrHk5gD9ic";
     private $PFID = "acthb_NASA";
 
-    const CONTROLLER_NAME = 'Rich88GameController';
+    const CONTROLLER_NAME = 'DevRich88GameController';
 
     public static function routes()
     {
-        Route::get('/rich88/', self::CONTROLLER_NAME . '@dev');
-        Route::get('/rich88/session_id', self::CONTROLLER_NAME . '@getSessionId');
-        Route::get('/rich88/balance/{account}', self::CONTROLLER_NAME . '@getBalance');
-        Route::post('/rich88/transfer', self::CONTROLLER_NAME . '@transfer');
-        Route::post('/rich88/award_activity', self::CONTROLLER_NAME . '@bonusWin');
-        Route::get('/rich88/{username}', self::CONTROLLER_NAME . '@loginGame');
-        Route::post('/rich88/v2/platform/single_wallet/rollback', self::CONTROLLER_NAME . '@cancelWithdraw');
+        Route::get('/rich88/dev/', self::CONTROLLER_NAME . '@dev');
+        Route::get('/rich88/dev/{username}', self::CONTROLLER_NAME . '@loginGame');
+        // Route::get('/rich88/dev/list', self::CONTROLLER_NAME . '@gameList');
+        Route::get('/rich88/dev/rich88/balance/{account}', self::CONTROLLER_NAME . '@getBalance');
+        Route::get('/rich88/dev/rich88/session_id', self::CONTROLLER_NAME . '@getSessionId');
+        Route::post('/rich88/dev/rich88/transfer', self::CONTROLLER_NAME . '@transfer');
+        Route::post('/rich88/dev/rich88/award_activity', self::CONTROLLER_NAME . '@bonusWin');
+        Route::post('/rich88/dev/v2/platform/single_wallet/rollback', self::CONTROLLER_NAME . '@cancelWithdraw');
     }
 
     public function dev()
@@ -54,6 +56,7 @@ class Rich88GameController extends Controller
 
     public function loginGame($username)
     {
+        // $username = "0933197072";
         $user = User::where('username', $username)->first();
         if (empty($user)) {
             $response = ["message" => "Oops! The user does not exist"];
@@ -74,31 +77,15 @@ class Rich88GameController extends Controller
                 'timestamp' => $current_timestamp,
             ]
         ]);
-
-        // return [
-        //     'Accept'   => 'application/json',
-        //     'Content-Type'   => 'application/json',
-        //     'api_key' => $api_key,
-        //     'pf_id' => $this->PFID,
-        //     'timestamp' => $current_timestamp,
-        // ];
-
-        // return "{$this->HOST}/v2/platform/login";
-
         $res = $client->request("POST", "{$this->HOST}/v2/platform/login", [
             // 'debug' => true,
             'json' => [
                 'account' =>  $username,
             ]
         ]);
-
-        // return [
-        //     'account' =>  $username,
-        // ];
-
         $response = $res->getBody()->getContents();
         $json = json_decode($response, true);
-        // return $res->getStatusCode();
+        // echo $res->getStatusCode();
         if ($json["code"] == 0) {
             $lobby_url = $json["data"]["url"];
             return redirect($lobby_url);
@@ -109,8 +96,8 @@ class Rich88GameController extends Controller
 
     public function gameList()
     {
-        // $username = "Test88";
         date_default_timezone_set('America/New_York');
+        // $username = "Test88";
         $current_timestamp = Carbon::now()->timestamp;
         // $api_key_payload = "acthb_NASADLUYRLliab7d2JWzhGRrAIOrHk5gD9ic1637215815";
 
@@ -134,7 +121,7 @@ class Rich88GameController extends Controller
             ]
         ]);
         // $res = $client->request("POST", "{$this->HOST}/v2/platform/login", [
-        $res = $client->request("GET", "https://lobbycenter.ark8899.com/v2/platform/gamelist?active_only=true", [
+        $res = $client->request("GET", "https://betacenter.ark8899.com/v2/platform/gamelist?active_only=true", [
             'form_params' => []
         ]);
         $response = $res->getBody()->getContents();

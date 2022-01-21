@@ -10,27 +10,27 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
 
-class DreamGamingController extends Controller
+class DevDreamGamingController extends Controller
 {
-    const CONTROLLER_NAME = 'DreamGamingController';
+    const CONTROLLER_NAME = 'DevDreamGamingController';
 
     const ERROR_VERIFICATION_TOKEN_FAILED = 2;
     const ERROR_TRANSFER_FAILED = 324;
     const ERROR_ACCOUNT_NOT_EXISTS = 102;
 
     const API_URL = 'https://api.dg0.co';
-    const API_KEY = 'f3c75da86085443d9c1235dd8e7fbf2b';
-    const AGENT_CODE = 'DG10063601';
+    const API_KEY = 'cd2ba3e39bb143cd8bfd509000d56a50';
+    const AGENT_CODE = 'DGTE01017L';
 
     public static function routes()
     {
-        Route::get('/dg/launch/{token}', self::CONTROLLER_NAME . '@launch');
-        Route::post('/dg/user/getBalance/{agentCode}', self::CONTROLLER_NAME . '@getBalance');
-        Route::post('/dg/account/transfer/{agentCode}', self::CONTROLLER_NAME . '@transfer');
-        Route::post('/dg/account/checkTransfer/{agentCode}', self::CONTROLLER_NAME . '@checkTransfer');
-        Route::post('/dg/account/inform/{agentCode}', self::CONTROLLER_NAME . '@inform');
-        Route::post('/dg/account/order/{agentCode}', self::CONTROLLER_NAME . '@order');
-        Route::post('/dg/account/unsettle/{agentCode}', self::CONTROLLER_NAME . '@unsettle');
+        Route::get('/dg/dev/launch/{token}', self::CONTROLLER_NAME . '@launch');
+        Route::post('/dg/dev/user/getBalance/{agentCode}', self::CONTROLLER_NAME . '@getBalance');
+        Route::post('/dg/dev/account/transfer/{agentCode}', self::CONTROLLER_NAME . '@transfer');
+        Route::post('/dg/dev/account/checkTransfer/{agentCode}', self::CONTROLLER_NAME . '@checkTransfer');
+        Route::post('/dg/dev/account/inform/{agentCode}', self::CONTROLLER_NAME . '@inform');
+        Route::post('/dg/dev/account/order/{agentCode}', self::CONTROLLER_NAME . '@order');
+        Route::post('/dg/dev/account/unsettle/{agentCode}', self::CONTROLLER_NAME . '@unsettle');
     }
 
     public function transfer(Request $request)
@@ -41,7 +41,6 @@ class DreamGamingController extends Controller
         $token = $payload['token'];
         $username = $payload['member']['username'];
         $amount = $payload['member']['amount'];
-        $ref = $payload['data'];
         $action = $amount < 0 ? 'TRANSFER_OUT' : 'TRANSFER_IN';
 
         if (!$this->verifyToken($token)) {
@@ -63,18 +62,16 @@ class DreamGamingController extends Controller
         $after_balance = $player->main_wallet;
 
         if ($action == 'TRANSFER_OUT') {
-            (new Payment())->payAll($player->id, $amount * -1, 'CASINO');
+            (new Payment())->payAll($player->id, $amount, 'CASINO');
         }
 
         (new Payment())->saveLog([
             'amount' => $amount,
-            'before_balance' => $before_balance,
-            'after_balance' => $after_balance,
             'action' => $amount < 0 ? 'BET' : 'SETTLE',
             'provider' => 'DG',
             'game_type' => 'CASINO',
-            'game_ref' => $ticket_id,
-            'transaction_ref' => $ref,
+            'game_ref' => 'NO REFERENCE',
+            'transaction_ref' => $ticket_id,
             'player_username' => $player->username,
         ]);
 
@@ -223,7 +220,7 @@ class DreamGamingController extends Controller
         }
 
         $token = $loggedIn['token'];
-        $launchUrl = $loggedIn['list'][0] . $token . "&language=th";
+        $launchUrl = $loggedIn['list'][0] . $token;
         return redirect($launchUrl);
     }
 
@@ -255,7 +252,7 @@ class DreamGamingController extends Controller
         $payload = [
             'token' => $token,
             'random' => $random,
-            'data' => 'P',
+            'data' => 'A',
             'member' => [
                 'username' => $username,
                 'password' => $random,

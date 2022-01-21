@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Classes\Payment;
 use App\Models\User;
 use App\Models\PPGame;
+use App\Models\Constant;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class PPGameController extends Controller
+class DevPPGameController extends Controller
 {
     //
     private $hostGame = "https://tg168-sg0.ppgames.net";
@@ -53,6 +54,10 @@ class PPGameController extends Controller
 
         $url = "{$this->hostGame}/gs2c/playGame.do?key={$urlValue}&stylename={$this->secureLogin}";
         return redirect($url);
+
+
+        // $url = "https://demogamesfree-asia.pragmaticplay.net/gs2c/openGame.do?token={$userToken}&lang=en&cur=THB&gameSymbol={$gameId}&jurisdiction=THB&lobbyURL=https://zap88.com/seamless/pp/dev&stylename={$this->secureLogin}";
+        // return redirect($url);
     }
 
 
@@ -173,17 +178,6 @@ class PPGameController extends Controller
             }
 
             (new Payment())->payAll($userWallet->id, $amount, 'SLOT');
-            (new Payment())->saveLog([
-                'amount' => $request->amount,
-                'before_balance' => $wallet_amount_before,
-                'after_balance' => $wallet_amount_before - $request->amount,
-                'action' => 'BET',
-                'provider' => 'PP',
-                'game_type' => is_numeric($request->gameId) ? 'CASINO' : 'SLOT',
-                'game_ref' => $request->gameId,
-                'transaction_ref' => $request->reference,
-                'player_username' => $username,
-            ]);
 
             DB::commit();
 
@@ -334,18 +328,6 @@ class PPGameController extends Controller
             } else {
                 $transactionId = $settleTransaction->id;
             }
-
-            (new Payment())->saveLog([
-                'amount' => $request->amount,
-                'before_balance' => $wallet_amount_before,
-                'after_balance' => $wallet_amount_before + $request->amount,
-                'action' => 'SETTLE',
-                'provider' => 'PP',
-                'game_type' => is_numeric($request->gameId) ? 'CASINO' : 'SLOT',
-                'game_ref' => $request->gameId,
-                'transaction_ref' => $request->reference,
-                'player_username' => $username,
-            ]);
 
             DB::commit();
 

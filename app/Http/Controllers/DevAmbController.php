@@ -12,9 +12,9 @@ use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class AmbController extends Controller
+class DevAmbController extends Controller
 {
-    private $host = "https://ap.ambpoker-api.com";
+    private $host = "https://staging.ambpoker-api.com";
     private $key = "e3cdd30bfc11fc60afe65c32f55034be";
     private $agentId = "nasavg";
 
@@ -210,8 +210,6 @@ class AmbController extends Controller
             (new Payment())->payAll($userWallet->id, $amount, 'SLOT');
             (new Payment())->saveLog([
                 'amount' => $amount,
-                'before_balance' => $wallet_amount_before,
-                'after_balance' => $wallet_amount_before - $amount,
                 'action' => 'BET',
                 'provider' => 'AMB',
                 'game_type' => 'SLOT',
@@ -300,8 +298,6 @@ class AmbController extends Controller
 
             (new Payment())->saveLog([
                 'amount' => $amount,
-                'before_balance' => $wallet_amount_before,
-                'after_balance' => $wallet_amount_before + $amount,
                 'action' => 'SETTLE',
                 'provider' => 'AMB',
                 'game_type' => 'SLOT',

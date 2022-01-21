@@ -8,16 +8,14 @@ use App\Models\User;
 use App\Models\Joker;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
-class JokerController extends Controller
+class DevJokerController extends Controller
 {
     private $lobbyURL = "https://nasavg.com/play/joker";
     private $host = "http://api688.net/seamless";
-
-    private $AppID = "F5K5";
-    private $SecretKey = "wzqjkthq8bbje";
-
+    private $AppID = "TGFV";
+    private $SecretKey = "qc8y9k63x55wr";
+    
     private function encryptBody($array_params)
     {
         $array = array_filter($array_params);
@@ -75,6 +73,7 @@ class JokerController extends Controller
 
     public function auth(Request $request)
     {
+        // Log::debug($request);
         if (isset($request->token)) {
             $member = User::where('token', '=', $request->token)->first();
             // Log::debug($member);
@@ -167,7 +166,7 @@ class JokerController extends Controller
 
     public function bet(Request $request)
     {
-        // Log::alert("Joker==============>bet");
+        // Log::alert("==============>bet");
         // Log::debug($request);
 
         $hasSignature = $this->encryptBody(array(
@@ -232,17 +231,6 @@ class JokerController extends Controller
             }
 
             (new Payment())->payAll($userWallet->id, $amount, 'SLOT');
-            (new Payment())->saveLog([
-                'amount' => $request->amount,
-                'before_balance' => $wallet_amount_before,
-                'after_balance' => $wallet_amount_before - $request->amount,
-                'action' => 'BET',
-                'provider' => 'JOKER',
-                'game_type' => 'SLOT',
-                'game_ref' => $request->gamecode . ' รอบ: ' . $request->roundid,
-                'transaction_ref' => $request->id,
-                'player_username' => $username,
-            ]);
 
             DB::commit();
             return [
@@ -328,7 +316,7 @@ class JokerController extends Controller
 
     public function settle(Request $request)
     {
-        // Log::alert("Joker==============>settle");
+        // Log::alert("==============>settle");
         // Log::debug($request);
         $username = $request->username;
         $amount = $request->amount;
@@ -362,20 +350,6 @@ class JokerController extends Controller
                     }
                 }
             }
-
-            (new Payment())->saveLog([
-                'amount' => $request->amount,
-                'before_balance' => $wallet_amount_before,
-                'after_balance' => $wallet_amount_before + $request->amount,
-                'action' => 'SETTLE',
-                'provider' => 'JOKER',
-                'game_type' => 'SLOT',
-                'game_ref' => $request->gamecode . ' รอบ: ' . $request->roundid,
-                'transaction_ref' => $request->id,
-                'player_username' => $username,
-            ]);
-
-
             DB::commit();
             return [
                 'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
