@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Log;
 class AmbController extends Controller
 {
     private $host = "https://ap.ambpoker-api.com";
-    private $key = "e3cdd30bfc11fc60afe65c32f55034be";
-    private $agentId = "nasavg";
+    private $key = "8ce091bd12f8dd15b7431da123a252f6";
+    private $agentId = "cabin88prd";
 
     public function devdev()
     {

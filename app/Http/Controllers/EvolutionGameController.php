@@ -16,8 +16,8 @@ use App\Classes\Payment;
 class EvolutionGameController extends Controller
 {
 
-    private $CasinoKey = "zyedebkitxegojye";
-    private $APIKey = "82db24b82a277fe9598364a7cec05a87";
+    private $CasinoKey = "foe6un7fuo5hllvr";
+    private $APIKey = "0166135c5e343cb115a0e9689d4563ad";
     private $HOST = "https://api.luckylivegames.com";
 
 

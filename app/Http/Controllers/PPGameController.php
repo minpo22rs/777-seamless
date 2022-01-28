@@ -15,7 +15,7 @@ class PPGameController extends Controller
     //
     private $hostGame = "https://tg168-sg0.ppgames.net";
     private $host = "https://api-sg0.ppgames.net/IntegrationService/v3/http/CasinoGameAPI";
-    private $secureLogin = "tg168_nasavg";
+    private $secureLogin = "tg168_cabin88";
     private $SecretKey = "D08b2bD268214a0c";
     private $currencyCode = "THB";
 

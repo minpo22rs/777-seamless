@@ -16,8 +16,8 @@ class JiliGamController extends Controller
 {
     //
     private $host = "https://wb-api.jlfafafa2.com";
-    private $agentId = "ZF084_NasaVG";
-    private $agentKey = "8fc9781160422a4caae0e18107e4e27f41f287aa";
+    private $agentId = "ZF084_Cabin88";
+    private $agentKey = "76b775ed18f7a95171053fc72f8f67e13068c612";
     private $currencyCode = "THB";
     private $gameLang = "en-US";
 
@@ -83,7 +83,7 @@ class JiliGamController extends Controller
             ]);
             // echo $res->getStatusCode();
             // echo $res->getHeader("content-type")[0];
-            // echo $res->getBody();
+            // return $res->getBody();
             $response = $res->getBody();
             // return $response;
 

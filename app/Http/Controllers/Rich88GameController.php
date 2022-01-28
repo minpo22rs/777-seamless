@@ -17,8 +17,8 @@ use App\Models\User;
 class Rich88GameController extends Controller
 {
     private $HOST = "https://lobbycenter.ark8899.com";
-    private $PrivateKey = "D8RPX3mhiZaBM2N0WWZSAYwUmGOUXkz9";
-    private $PFID = "acthb_NASA";
+    private $PrivateKey = "UCZTNp1SAOG3KZuGCgX4KCs3j6IzsXZv";
+    private $PFID = "acthb_CABI";
 
     const CONTROLLER_NAME = 'Rich88GameController';
 

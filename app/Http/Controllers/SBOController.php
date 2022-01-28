@@ -15,7 +15,7 @@ class SBOController extends Controller
     const CONTROLLER_NAME = 'SBOController';
 
     const API_URL = 'https://ex-api-yy.xxttgg.com';
-    const COMPANY_KEY = '150BC94D6DDF4DFC9652D8B66A2C1723';
+    const COMPANY_KEY = 'F9316F7D26924A2DA0FFBD81CFE95B90';
 
     const NO_ERROR = 0;
     const KEY_FAILED = 4;
@@ -24,7 +24,7 @@ class SBOController extends Controller
     const NOT_ENOUGHT_BALANCE = 5;
     const BET_NOT_EXIST = 6;
     const ALREADY_ROOLBACK = 2003;
-    const PREFIX = 'NVG_';
+    const PREFIX = 'CB_';
 
     protected function buildFailedValidationResponse(Request $request, $errors)
     {
@@ -57,7 +57,7 @@ class SBOController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'nasavg_prod',
+            'Username' => 'cabin_prod',
             'Password' => '12345Aa',
             'Currency' => 'THB',
             'Min' => 1,
@@ -113,7 +113,7 @@ class SBOController extends Controller
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
             'Username' => $username,
-            'Agent' => 'nasavg_prod',
+            'Agent' => 'cabin_prod',
         ];
 
         $response = Http::post($url, $payload);

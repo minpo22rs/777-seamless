@@ -19,18 +19,18 @@ class DreamGamingController extends Controller
     const ERROR_ACCOUNT_NOT_EXISTS = 102;
 
     const API_URL = 'https://api.dg0.co';
-    const API_KEY = 'f3c75da86085443d9c1235dd8e7fbf2b';
-    const AGENT_CODE = 'DG10063601';
+    const API_KEY = '1a59bc54c6994a6da73086bf921f356e';
+    const AGENT_CODE = 'DG10063605';
 
     public static function routes()
     {
-        Route::get('/dg/launch/{token}', self::CONTROLLER_NAME . '@launch');
-        Route::post('/dg/user/getBalance/{agentCode}', self::CONTROLLER_NAME . '@getBalance');
-        Route::post('/dg/account/transfer/{agentCode}', self::CONTROLLER_NAME . '@transfer');
-        Route::post('/dg/account/checkTransfer/{agentCode}', self::CONTROLLER_NAME . '@checkTransfer');
-        Route::post('/dg/account/inform/{agentCode}', self::CONTROLLER_NAME . '@inform');
-        Route::post('/dg/account/order/{agentCode}', self::CONTROLLER_NAME . '@order');
-        Route::post('/dg/account/unsettle/{agentCode}', self::CONTROLLER_NAME . '@unsettle');
+        Route::get('/dream/launch/{token}', self::CONTROLLER_NAME . '@launch');
+        Route::post('/dream/user/getBalance/{agentCode}', self::CONTROLLER_NAME . '@getBalance');
+        Route::post('/dream/account/transfer/{agentCode}', self::CONTROLLER_NAME . '@transfer');
+        Route::post('/dream/account/checkTransfer/{agentCode}', self::CONTROLLER_NAME . '@checkTransfer');
+        Route::post('/dream/account/inform/{agentCode}', self::CONTROLLER_NAME . '@inform');
+        Route::post('/dream/account/order/{agentCode}', self::CONTROLLER_NAME . '@order');
+        Route::post('/dream/account/unsettle/{agentCode}', self::CONTROLLER_NAME . '@unsettle');
     }
 
     public function transfer(Request $request)
@@ -211,7 +211,6 @@ class DreamGamingController extends Controller
         if (!$player) {
             return response()->json(['message' => 'Invalid Token'], 400);
         }
-
         $username = $player->username;
         $loggedIn = $this->login($username);
 

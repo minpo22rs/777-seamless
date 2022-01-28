@@ -15,8 +15,8 @@ class JokerController extends Controller
     private $lobbyURL = "https://nasavg.com/play/joker";
     private $host = "http://api688.net/seamless";
 
-    private $AppID = "F5K5";
-    private $SecretKey = "wzqjkthq8bbje";
+    private $AppID = "F8FH";
+    private $SecretKey = "rtxiaek7uahdh";
 
     private function encryptBody($array_params)
     {

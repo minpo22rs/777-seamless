@@ -21,7 +21,7 @@ class SABAController extends Controller
     const API_URL = 'http://c9s5api.bw6688.com/api';
     const VENDOR_ID = 'orjr6g5ha3';
     const CURRENCY_ID = 4;
-    const PREFIX = 'NVG_';
+    const PREFIX = 'CB_';
 
     protected function buildFailedValidationResponse(Request $request, $errors)
     {
@@ -31,17 +31,17 @@ class SABAController extends Controller
     public static function routes()
     {
 
-        Route::get('/saba/launch/{token}/{mode}', self::CONTROLLER_NAME . '@launch');
-        Route::get('/saba', self::CONTROLLER_NAME . '@index');
-        Route::post('/saba/getbalance', self::CONTROLLER_NAME . '@getBalance');
-        Route::post('/saba/placebet', self::CONTROLLER_NAME . '@placeBet');
-        Route::post('/saba/confirmbet', self::CONTROLLER_NAME . '@confirmBet');
-        Route::post('/saba/cancelbet', self::CONTROLLER_NAME . '@cancelBet');
-        Route::post('/saba/settle', self::CONTROLLER_NAME . '@settle');
-        Route::post('/saba/resettle', self::CONTROLLER_NAME . '@reSettle');
-        Route::post('/saba/unsettle', self::CONTROLLER_NAME . '@unSettle');
-        Route::post('/saba/placebetparlay', self::CONTROLLER_NAME . '@placeBetParlay');
-        Route::post('/saba/confirmbetparlay', self::CONTROLLER_NAME . '@confirmBetParlay');
+        Route::get('/ibc/launch/{token}/{mode}', self::CONTROLLER_NAME . '@launch');
+        Route::get('/ibc', self::CONTROLLER_NAME . '@index');
+        Route::post('/ibc/getbalance', self::CONTROLLER_NAME . '@getBalance');
+        Route::post('/ibc/placebet', self::CONTROLLER_NAME . '@placeBet');
+        Route::post('/ibc/confirmbet', self::CONTROLLER_NAME . '@confirmBet');
+        Route::post('/ibc/cancelbet', self::CONTROLLER_NAME . '@cancelBet');
+        Route::post('/ibc/settle', self::CONTROLLER_NAME . '@settle');
+        Route::post('/ibc/resettle', self::CONTROLLER_NAME . '@reSettle');
+        Route::post('/ibc/unsettle', self::CONTROLLER_NAME . '@unSettle');
+        Route::post('/ibc/placebetparlay', self::CONTROLLER_NAME . '@placeBetParlay');
+        Route::post('/ibc/confirmbetparlay', self::CONTROLLER_NAME . '@confirmBetParlay');
     }
 
     public function confirmBetParlay(Request $request)

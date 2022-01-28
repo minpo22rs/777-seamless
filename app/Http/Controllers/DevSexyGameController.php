@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Log;
 class DevSexyGameController extends Controller
 {
     private $host = "https://tttint.onlinegames22.com";
-    private $certCode = "N19V3PqBl1QJtAyK85e";
-    private $agentId = "nasavg";
+    private $certCode = "efKnvJ7YJjhVMfUsIeM";
+    private $agentId = "cabin88";
     private $currencyCode = "THB";
     private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}} ';

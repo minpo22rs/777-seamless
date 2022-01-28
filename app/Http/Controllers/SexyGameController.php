@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Log;
 class SexyGameController extends Controller
 {
     private $host = "https://api.onlinegames22.com";
-    private $certCode = "X3gyCPWqRxJ7tVAFW7T";
-    private $agentId = "nasavg";
+    private $certCode = "3TBYf0dH2EQPNyojiJ1";
+    private $agentId = "cabin88";
     private $currencyCode = "THB";
     private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
@@ -78,7 +78,7 @@ class SexyGameController extends Controller
             ]);
             // echo $res->getStatusCode();
             // echo $res->getHeader('content-type')[0];
-            // echo $res->getBody();
+            // return $res->getBody();
             $response = $res->getBody();
             if ($response) {
                 $json = json_decode($response);
@@ -232,7 +232,7 @@ class SexyGameController extends Controller
                             throw new \Exception('Invalid user Id', 1000);
                         }
                     }
-
+                    
                     DB::commit();
                     return [
                         "balance" => $wallet_amount_after,

@@ -16,9 +16,9 @@ use Ramsey\Uuid\Uuid;
 class EvoplayController extends Controller
 {
 
-    private $SYSTEM_ID = "4942";
+    private $SYSTEM_ID = "5467";
     private $VERSION = 1;
-    private $SYSTEM_KEY = "e58d8b7078d8d33452c741503823ba77";
+    private $SYSTEM_KEY = "324b54161e4856049f5e66b9f5bf3351";
     private $CURRENCY = "THB";
     private $HOST = "https://api.8provider.com";
 
@@ -26,9 +26,9 @@ class EvoplayController extends Controller
     const CONTROLLER_NAME = 'EvoplayController';
     public static function routes()
     {
-        Route::get('/evoplay/dev/', self::CONTROLLER_NAME . '@getGameList');
-        Route::get('/evoplay/dev/{username}/{game_id}', self::CONTROLLER_NAME . '@loginGame');
-        Route::post('/evoplay/dev', self::CONTROLLER_NAME . '@gamePlayer');
+        Route::get('/evoplay/', self::CONTROLLER_NAME . '@getGameList');
+        Route::get('/evoplay/{username}/{game_id}', self::CONTROLLER_NAME . '@loginGame');
+        Route::post('/evoplay', self::CONTROLLER_NAME . '@gamePlayer');
     }
 
     /**
