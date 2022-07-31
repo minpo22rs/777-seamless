@@ -37,11 +37,13 @@ class Payment
     public function payAll($userId, $bet, $type = 'SLOT')
     {
         $this->user = User::find($userId);
-        $this->bet = $bet;
-        $this->type = strtolower($type);
-        $this->payAffiliate();
-        $this->payCommission();
-        $this->incrementTurnover();
+        if ($this->user) {
+            $this->bet = $bet;
+            $this->type = strtolower($type);
+            // $this->payAffiliate();
+            // $this->payCommission();
+            $this->incrementTurnover();
+        }
         return "SUCCEED";
     }
 

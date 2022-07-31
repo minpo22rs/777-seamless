@@ -19,8 +19,8 @@ class DreamGamingController extends Controller
     const ERROR_ACCOUNT_NOT_EXISTS = 102;
 
     const API_URL = 'https://api.dg0.co';
-    const API_KEY = '1a59bc54c6994a6da73086bf921f356e';
-    const AGENT_CODE = 'DG10063605';
+    const API_KEY = 'a5d5f87ee8104493b5aee23fba100091';
+    const AGENT_CODE = 'DG10063754';
 
     public static function routes()
     {

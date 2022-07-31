@@ -15,8 +15,9 @@ use Illuminate\Support\Facades\Log;
 class AmbController extends Controller
 {
     private $host = "https://ap.ambpoker-api.com";
-    private $key = "8ce091bd12f8dd15b7431da123a252f6";
-    private $agentId = "cabin88prd";
+    private $key = "5088a9dbb1c9f13684c3bdb1fd8ca774";
+    private $agentId = "mm777bet";
+    private $whiteListIPs = ['54.255.110.219', '54.179.29.18', '13.213.115.59'];
 
     public function devdev()
     {
@@ -165,8 +166,14 @@ class AmbController extends Controller
 
     public function bet(Request $request)
     {
-        Log::alert("==============>bet");
+        Log::alert("AMB==============>bet");
         Log::debug($request);
+        $clientIP = $request->ip();
+        Log::debug('ip => ' . $clientIP);
+
+        if(!in_array($clientIP, $this->whiteListIPs)) {
+            return "Not Allow";
+        }
 
         $username = $request->username;
         $amount = $request->amount;
@@ -206,6 +213,14 @@ class AmbController extends Controller
             } else {
                 throw new \Exception('Balance insufficient', 800);
             }
+
+            if($amount <= 0) {
+                $userWallet->is_free_spin = 1;
+            }else {
+                $userWallet->is_free_spin = 0;
+            }
+
+            $userWallet->save();
 
             (new Payment())->payAll($userWallet->id, $amount, 'SLOT');
             (new Payment())->saveLog([
@@ -255,8 +270,15 @@ class AmbController extends Controller
 
     public function settle(Request $request)
     {
-        Log::alert("==============>settle");
+        Log::alert("AMB==============>settle");
         Log::debug($request);
+        
+        $clientIP = $request->ip();
+        Log::debug('ip => ' . $clientIP);
+
+        if(!in_array($clientIP, $this->whiteListIPs)) {
+            return "Not Allow";
+        }
 
         $username = $request->username;
         $amount = $request->amount;
@@ -347,6 +369,13 @@ class AmbController extends Controller
         Log::alert("==============>actionCancel");
         Log::debug($request);
 
+        $clientIP = $request->ip();
+        Log::debug('ip => ' . $clientIP);
+
+        if(!in_array($clientIP, $this->whiteListIPs)) {
+            return "Not Allow";
+        }
+
         $username = $request->username;
         $amount = $request->amount;
         $roundId = $request->roundId;
@@ -429,6 +458,13 @@ class AmbController extends Controller
     {
         Log::alert("==============>actionVoid");
         Log::debug($request);
+
+        $clientIP = $request->ip();
+        Log::debug('ip => ' . $clientIP);
+
+        if(!in_array($clientIP, $this->whiteListIPs)) {
+            return "Not Allow";
+        }
 
         $username = $request->username;
         $amount = $request->amount;

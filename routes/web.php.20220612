@@ -39,14 +39,14 @@ HuayDragonController::routes();
 
 $router->get('/pragmatic/launch/{userToken}/{gameId}', 'PPGameController@login');
 $router->get('/pragmatic', 'PPGameController@index');
-$router->post('/pragmatic/authenticate', 'PPGameController@auth');
-$router->post('/pragmatic/balance', 'PPGameController@balance');
-$router->post('/pragmatic/bet', 'PPGameController@bet');
-$router->post('/pragmatic/result', 'PPGameController@settle');
-$router->post('/pragmatic/bonusWin', 'PPGameController@bonusWin');
-$router->post('/pragmatic/jackpotWin', 'PPGameController@jackpotWin');
-$router->post('/pragmatic/refund', 'PPGameController@cancelBet');
-$router->post('/pragmatic/promoWin', 'PPGameController@promoWin');
+$router->post('/pragmatic/authenticate.html', 'PPGameController@auth');
+$router->post('/pragmatic/balance.html', 'PPGameController@balance');
+$router->post('/pragmatic/bet.html', 'PPGameController@bet');
+$router->post('/pragmatic/result.html', 'PPGameController@settle');
+$router->post('/pragmatic/bonusWin.html', 'PPGameController@bonusWin');
+$router->post('/pragmatic/jackpotWin.html', 'PPGameController@jackpotWin');
+$router->post('/pragmatic/refund.html', 'PPGameController@cancelBet');
+$router->post('/pragmatic/promoWin.html', 'PPGameController@promoWin');
 
 $router->get('/awc/launch/{username}/{gameType}', 'SexyGameController@login');
 $router->post('/awc', 'SexyGameController@getBalance');
@@ -81,20 +81,20 @@ $router->post('/amb/void', 'AmbController@voidSettle');
 
 $account = [
     'deposit' => [
-        'deviceId' => '604a4f9c-5024-4af6-9035-4cca5f38f392',
+        'deviceId' => 'b8f023af-949b-48bc-92d8-b37425c50365',
         'pin' => '252525',
-        'accountNo' => '1922431236',
+        'accountNo' => '1922431464',
     ],
     'withdraw' => [
-        'deviceId' => 'd9c1df03-d37f-4c82-ac94-8d0cf6b272fd',
-        'pin' => '252525',
-        'accountNo' => '1222391241',
+        'deviceId' => '510b717c-bbba-4d12-9d6f-80ead59160e3',
+        'pin' => '221689',
+        'accountNo' => '1922431105',
     ],
     // ใช้สำหรับอ่านชื่อบัญชี
     'another1' => [
-        'deviceId' => '604a4f9c-5024-4af6-9035-4cca5f38f392',
-        'pin' => '252525',
-        'accountNo' => '1922431236',
+        'deviceId' => 'a060ab7c-c20a-49b3-8542-8d528bc5d4cb',
+        'pin' => '083535',
+        'accountNo' => '2644152562',
     ],
 ];
 

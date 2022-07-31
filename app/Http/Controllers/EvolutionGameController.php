@@ -16,11 +16,9 @@ use App\Classes\Payment;
 class EvolutionGameController extends Controller
 {
 
-    private $CasinoKey = "foe6un7fuo5hllvr";
-    private $APIKey = "0166135c5e343cb115a0e9689d4563ad";
+    private $CasinoKey = "q1toemwfyrneusip";
+    private $APIKey = "316205f73b9ba5dd5d54ff7783c991ac";
     private $HOST = "https://api.luckylivegames.com";
-
-
 
     const CONTROLLER_NAME = 'EvolutionGameController';
     public static function routes()
@@ -177,6 +175,7 @@ class EvolutionGameController extends Controller
         $transaction = $request->transaction;
 
         try {
+            throw new \Exception('UNKNOWN_ERROR', 500);
             $userWallet = User::where('username', $username)->lockForUpdate()->first();
             if (!$userWallet) {
                 throw new \Exception('INVALID_TOKEN_ID', 500);
@@ -249,6 +248,7 @@ class EvolutionGameController extends Controller
         $transaction = $request->transaction;
 
         try {
+            throw new \Exception('UNKNOWN_ERROR', 500);
             $userWallet = User::where('username', $username)->lockForUpdate()->first();
             if (!$userWallet) {
                 throw new \Exception('INVALID_TOKEN_ID', 500);

@@ -15,11 +15,16 @@ use Illuminate\Support\Facades\Log;
 class SexyGameController extends Controller
 {
     private $host = "https://api.onlinegames22.com";
-    private $certCode = "3TBYf0dH2EQPNyojiJ1";
-    private $agentId = "cabin88";
+    private $certCode = "AdydwGKtz7dYi4kCHse";
+    private $agentId = "777bet";
     private $currencyCode = "THB";
     private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
+
+    public function hello()
+    {
+        return response()->json(['message' => 'We are ready']);
+    }
 
     public function login($username, $gameType)
     {
@@ -31,6 +36,7 @@ class SexyGameController extends Controller
                 'cert' =>  $this->certCode,
                 'agentId' =>  $this->agentId,
                 'userId' =>  $username,
+                'gameCode'   => 'MX-LIVE-001',
                 'gameType' =>  'LIVE',
                 'platform' =>  'SEXYBCRT',
                 'isMobileLogin' =>  true,
@@ -72,6 +78,7 @@ class SexyGameController extends Controller
         }
 
         try {
+            #return ['url' =>  $this->host . '/wallet/' . $method, 'form_params' => $form_params]; 
             $client = new Client();
             $res = $client->request('POST', $this->host . '/wallet/' . $method, [
                 'form_params' => $form_params
@@ -80,6 +87,7 @@ class SexyGameController extends Controller
             // echo $res->getHeader('content-type')[0];
             // return $res->getBody();
             $response = $res->getBody();
+            // return $response;
             if ($response) {
                 $json = json_decode($response);
                 if ($json->status == '0000') {
@@ -203,9 +211,9 @@ class SexyGameController extends Controller
                                     (new Payment())->payAll($userWallet->id, $element['betAmount'], 'CASINO');
                                     $payload = $element;
                                     (new Payment())->saveLog([
-                                        'amount' => $payload['betAmount'], 
-                                        'before_balance' => $wallet_amount_before, 
-                                        'after_balance' => $wallet_amount_before - $payload['betAmount'], 
+                                        'amount' => $payload['betAmount'],
+                                        'before_balance' => $wallet_amount_before,
+                                        'after_balance' => $wallet_amount_before - $payload['betAmount'],
                                         'action' => 'BET',
                                         'provider' => $payload["platform"],
                                         'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
@@ -232,7 +240,7 @@ class SexyGameController extends Controller
                             throw new \Exception('Invalid user Id', 1000);
                         }
                     }
-                    
+
                     DB::commit();
                     return [
                         "balance" => $wallet_amount_after,
@@ -242,7 +250,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => (string)$e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -429,7 +437,7 @@ class SexyGameController extends Controller
                                 $payload = $element;
                                 $winloss = !empty($payload["winAmount"]) ? $payload["winAmount"] : 0;
                                 (new Payment())->saveLog([
-                                    'amount' => $winloss, 
+                                    'amount' => $winloss,
                                     'before_balance' => $wallet_amount_before,
                                     'after_balance' => $wallet_amount_before + $winloss,
                                     'action' => 'SETTLE',
@@ -452,6 +460,47 @@ class SexyGameController extends Controller
                             }
                         } else {
                             throw new \Exception('Invalid user Id', 1000);
+                        }
+                    }
+                    DB::commit();
+                    return [
+                        "status" => "0000"
+                    ];
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return [
+                        "status" => $e->getCode(),
+                        "desc" => $e->getMessage()
+                    ];
+                }
+                break;
+            case "resettle":;
+                DB::beginTransaction();
+                try {
+                    foreach ($message['txns'] as $element) {
+                        $trxId = $element['platformTxId'];
+                        Log::debug("SEXY=$trxId");
+                        $wallet = User::where('username', $element['userId'])->lockForUpdate()->first();
+                        if ($wallet) {
+                            // $beforeCredit = $wallet->main_wallet;
+                            $sexy = SexyGame::where('platformTxId', $trxId)->where('action', 'settle')->first();
+                            if($sexy) {
+                                // throw new \Exception('Invalid Transaction Id', 1000);
+                                $oldWinAmount = $sexy->winAmount;
+                                Log::debug("SEXY=$trxId, oldWinAmount=$oldWinAmount");
+                                $newWinAmount = $element['winAmount'];
+                                Log::debug("SEXY=$trxId, newWinAmount=$newWinAmount");
+                                $changeBalance = $wallet->main_wallet + $newWinAmount - $oldWinAmount;
+                                Log::debug("SEXY=$trxId, changeBalance=$changeBalance");
+                                $wallet->main_wallet = $changeBalance;
+                                $wallet->save();
+                                $sexy->action = 'resettle';
+                                $sexy->save();
+                                // $wallet->decrement('main_wallet', $oldWinAmount);
+                                // $wallet->increment('main_wallet', $newWinAmount);
+                            }
+                        } else {
+                            // throw new \Exception('Invalid user Id', 1000);
                         }
                     }
                     DB::commit();
@@ -659,7 +708,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => (string)$e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -763,6 +812,9 @@ class SexyGameController extends Controller
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
+                            if ($wallet_amount_before < $element["tip"]) {
+                                throw new \Exception('Not Enough Balance', 1018);
+                            }
 
                             $tip = $this->checkTransactionHistory('tip', $element);
                             if (!$tip) {
@@ -792,7 +844,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => (string)$e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }

@@ -16,7 +16,7 @@ class DevPPGameController extends Controller
     //
     private $hostGame = "https://tg168-sg0.ppgames.net";
     private $host = "https://api-sg0.ppgames.net/IntegrationService/v3/http/CasinoGameAPI";
-    private $secureLogin = "tg168_nasavg";
+    private $secureLogin = "tg168_mm777bet";
     private $SecretKey = "D08b2bD268214a0c";
     private $currencyCode = "THB";
 
@@ -50,7 +50,7 @@ class DevPPGameController extends Controller
         }
         $userToken = $user->token;
 
-        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=th&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://nasavg.com/lobby/pp");
+        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=th&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://mm777bet.com");
 
         $url = "{$this->hostGame}/gs2c/playGame.do?key={$urlValue}&stylename={$this->secureLogin}";
         return redirect($url);

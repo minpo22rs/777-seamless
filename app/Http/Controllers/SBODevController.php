@@ -52,7 +52,7 @@ class SBODevController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'nasavg_1',
+            'Username' => 'mm777bet_1',
             'Password' => '12345Aa',
             'Currency' => 'THB',
             'Min' => 1,
@@ -108,7 +108,7 @@ class SBODevController extends Controller
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
             'Username' => $username,
-            'Agent' => 'nasavg_1',
+            'Agent' => 'mm777bet_1',
         ];
 
         $response = Http::post($url, $payload);

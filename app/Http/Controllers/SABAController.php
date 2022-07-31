@@ -19,9 +19,9 @@ class SABAController extends Controller
 
     const DOMAIN = 'c9s5api.bw6688.com';
     const API_URL = 'http://c9s5api.bw6688.com/api';
-    const VENDOR_ID = 'orjr6g5ha3';
+    const VENDOR_ID = 'wdcxtqhyuy';
     const CURRENCY_ID = 4;
-    const PREFIX = 'CB_';
+    const PREFIX = 'mm777betprd_';
 
     protected function buildFailedValidationResponse(Request $request, $errors)
     {
@@ -31,8 +31,8 @@ class SABAController extends Controller
     public static function routes()
     {
 
-        Route::get('/ibc/launch/{token}/{mode}', self::CONTROLLER_NAME . '@launch');
         Route::get('/ibc', self::CONTROLLER_NAME . '@index');
+        Route::get('/ibc/launch/{token}/{mode}', self::CONTROLLER_NAME . '@launch');
         Route::post('/ibc/getbalance', self::CONTROLLER_NAME . '@getBalance');
         Route::post('/ibc/placebet', self::CONTROLLER_NAME . '@placeBet');
         Route::post('/ibc/confirmbet', self::CONTROLLER_NAME . '@confirmBet');
@@ -42,6 +42,64 @@ class SABAController extends Controller
         Route::post('/ibc/unsettle', self::CONTROLLER_NAME . '@unSettle');
         Route::post('/ibc/placebetparlay', self::CONTROLLER_NAME . '@placeBetParlay');
         Route::post('/ibc/confirmbetparlay', self::CONTROLLER_NAME . '@confirmBetParlay');
+    }
+
+    public function index()
+    {
+        return ['message' => 'Hello, World'];
+    }
+
+    public function launch($token, $mode)
+    {
+        $player = User::firstWhere('token', $token);
+        if (!$player) {
+            return response()->json(['message' => 'Invalid Token'], 400);
+        }
+        $username = $player->username;
+        $created = $this->createMember($username);
+        $loggedIn = null;
+        if ($created['error_code'] == 0) {
+            $loggedIn = $this->login($username, $mode);
+        } else {
+            $loggedIn = $this->login($username, $mode);
+        }
+        $launchUrl = $loggedIn['Data'] . "&lang=th";
+        return redirect($launchUrl);
+    }
+
+    public function createMember($username)
+    {
+        $url = self::API_URL . '/CreateMember';
+
+        $payload =  [
+            "vendor_id" => self::VENDOR_ID,
+            "vendor_member_id" => self::PREFIX . $username,
+            "operatorid" => 'mm777betprd',
+            "username" => self::PREFIX .'' . $username,
+            "oddstype" => "1",
+            "currency" => self::CURRENCY_ID,
+            "maxtransfer" => 1000000,
+            "mintransfer" => 1,
+        ];
+
+        // return ['url' => $url, 'body' => $payload];
+
+        $response = Http::asForm()->post($url, $payload);
+        return $response;
+    }
+
+    public function login($username, $mode)
+    {
+        $url = self::API_URL . '/GetSabaUrl';
+
+        $payload = [
+            'vendor_id' => self::VENDOR_ID,
+            'platform' => $mode == 'desktop' ? 1 : 2,
+            'vendor_member_id' => self::PREFIX . $username,
+        ];
+
+        $response = Http::asForm()->post($url, $payload);
+        return $response;
     }
 
     public function confirmBetParlay(Request $request)
@@ -478,6 +536,7 @@ class SABAController extends Controller
         $payload = $request->post();
         $message = $payload['message'];
         $this->log("Get Balance", $payload);
+        // return ['xxx'];
         $userId = str_replace(self::PREFIX, '', $message['userId']);
 
         $player = User::firstWhere('username', $userId);
@@ -498,64 +557,6 @@ class SABAController extends Controller
         ];
 
         $this->log("Get Balance Response", $response);
-        return $response;
-    }
-
-    public function index()
-    {
-        // return $this->createMember();
-        // return $this->login();
-        return ['message' => 'Hello, World'];
-    }
-
-    public function launch($token, $mode)
-    {
-        $player = User::firstWhere('token', $token);
-        if (!$player) {
-            return response()->json(['message' => 'Invalid Token'], 400);
-        }
-        $username = $player->username;
-        $created = $this->createMember($username);
-        $loggedIn = null;
-        if ($created['error_code'] == 0) {
-            $loggedIn = $this->login($username, $mode);
-        } else {
-            $loggedIn = $this->login($username, $mode);
-        }
-        $launchUrl = $loggedIn['Data'] . "&lang=th";
-        return redirect($launchUrl);
-    }
-
-    public function createMember($username)
-    {
-        $url = self::API_URL . '/CreateMember';
-
-        $payload =  [
-            "vendor_id" => self::VENDOR_ID,
-            "vendor_member_id" => self::PREFIX . $username,
-            "operatorid" => "ZhiFeng084",
-            "username" => self::PREFIX . $username,
-            "oddstype" => "1",
-            "currency" => self::CURRENCY_ID,
-            "maxtransfer" => 1000000,
-            "mintransfer" => 1,
-        ];
-
-        $response = Http::asForm()->post($url, $payload);
-        return $response;
-    }
-
-    public function login($username, $mode)
-    {
-        $url = self::API_URL . '/GetSabaUrl';
-
-        $payload = [
-            'vendor_id' => self::VENDOR_ID,
-            'platform' => $mode == 'desktop' ? 1 : 2,
-            'vendor_member_id' => self::PREFIX . $username,
-        ];
-
-        $response = Http::asForm()->post($url, $payload);
         return $response;
     }
 

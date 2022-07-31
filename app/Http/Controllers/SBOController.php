@@ -15,7 +15,7 @@ class SBOController extends Controller
     const CONTROLLER_NAME = 'SBOController';
 
     const API_URL = 'https://ex-api-yy.xxttgg.com';
-    const COMPANY_KEY = 'F9316F7D26924A2DA0FFBD81CFE95B90';
+    const COMPANY_KEY = 'B81A5BE4485E4FCAB6289A98B2EB511A';
 
     const NO_ERROR = 0;
     const KEY_FAILED = 4;
@@ -24,7 +24,7 @@ class SBOController extends Controller
     const NOT_ENOUGHT_BALANCE = 5;
     const BET_NOT_EXIST = 6;
     const ALREADY_ROOLBACK = 2003;
-    const PREFIX = 'CB_';
+    const PREFIX = '77B';
 
     protected function buildFailedValidationResponse(Request $request, $errors)
     {
@@ -33,11 +33,11 @@ class SBOController extends Controller
 
     public static function routes()
     {
-        Route::get('/sbobet', self::CONTROLLER_NAME . '@createAgent');
+        Route::get('/sbobet/launch/{token}/{mode}', self::CONTROLLER_NAME . '@launch');
+        Route::get('/sbobet/create-agent', self::CONTROLLER_NAME . '@createAgent');
         Route::get('/sbobet/update-bet-limit/{username}/{max}/{maxPerMatch}', self::CONTROLLER_NAME . '@updateBetlimit');
         Route::get('/sbobet/update-agent-bet-limit', self::CONTROLLER_NAME . '@updateAgentBetlimit');
         Route::get('/sbobet/get-player-bet-setting/{username}', self::CONTROLLER_NAME . '@getPlayerBetSetting');
-        Route::get('/sbobet/launch/{token}/{mode}', self::CONTROLLER_NAME . '@launch');
         Route::post('/sbobet/GetBalance', self::CONTROLLER_NAME . '@getBalance');
         Route::post('/sbobet/Deduct', self::CONTROLLER_NAME . '@deduct');
         Route::post('/sbobet/Settle', self::CONTROLLER_NAME . '@settle');
@@ -57,7 +57,7 @@ class SBOController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'cabin_prod',
+            'Username' => 'mm777bet_prod',
             'Password' => '12345Aa',
             'Currency' => 'THB',
             'Min' => 1,
@@ -67,18 +67,17 @@ class SBOController extends Controller
         ];
 
         $response = Http::post($url, $payload);
+
         return $response;
     }
 
     public function launch($token, $mode)
     {
         $player = User::firstWhere('token', $token);
-        if (!$player) {
-            return response()->json(['message' => 'Invalid Token'], 400);
-        }
 
         $username = self::PREFIX . $player->username;
         $loggedIn = $this->login($username);
+
         if ($loggedIn['error']['id']) {
             $registered = $this->register($username);
             if ($registered['error']['id'] == 0) {
@@ -86,8 +85,14 @@ class SBOController extends Controller
             }
         }
         $mode = $mode == 'desktop' ? 'd' : 'm';
-        $launchUrl = $loggedIn['url'] . '&lang=th-th&oddstyle=MY&theme=sbo&oddsmode=double&device=' . $mode;
+        $launchUrl = 'https:' . $loggedIn['url'] . '&lang=th-th&oddstyle=MY&theme=sbo&oddsmode=double&device=' . $mode;
+
         return redirect($launchUrl);
+        // return response()->json([
+        //     'code'      => 0,
+        //     'message'   => 'success',
+        //     'url'       => $launchUrl
+        // ]);
     }
 
     public function login($username)
@@ -113,7 +118,7 @@ class SBOController extends Controller
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
             'Username' => $username,
-            'Agent' => 'cabin_prod',
+            'Agent' => 'mm777bet_prod',
         ];
 
         $response = Http::post($url, $payload);
@@ -141,7 +146,7 @@ class SBOController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'nasavg_prod',
+            'Username' => 'mm777bet_prod',
             'Min' => 1,
             'Max' => 5000,
             'MaxPerMatch' => 20000,
@@ -160,7 +165,7 @@ class SBOController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'NVG_' . $username,
+            'Username' => self::PREFIX . $username,
             'Min' => 1,
             'Max' => $max,
             'MaxPerMatch' => $maxPerMatch,
@@ -172,21 +177,6 @@ class SBOController extends Controller
             return  ['message' => 'แก้ไข BET LIMIT สำเร็จ'];
         }
         return $response;
-    }
-
-    public function index()
-    {
-        $transfer_code = '3515495';
-        $trx = SBO::where('transfer_code', $transfer_code)->first();
-        if (!$trx) {
-            return ['ErrorCode' => self::INTERNAL_FAILED, 'ErrorMessage' => 'Internal Error', 'Balance' => 0];
-        }
-
-        $trx->status = 'running';
-        $trx->save();
-
-        return $trx;
-        return ['message' => 'Hello, World.'];
     }
 
     public function getBetStatus(Request $request)
@@ -280,7 +270,7 @@ class SBOController extends Controller
 
         if (!$trx) {
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 6,
                 'ErrorMessage' => 'Stake not exists',
@@ -300,18 +290,27 @@ class SBOController extends Controller
             $trx->save();
 
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 0,
                 'ErrorMessage' => 'No Error',
             ];
         } else {
-            return [
-                'AccountName' => $player->username,
-                'Balance' => $player->main_wallet,
-                'ErrorCode' => 2002,
-                'ErrorMessage' => 'Stake Already Canceled',
-            ];
+            if ($trx->status == 'void') {
+                return [
+                    'AccountName' => self::PREFIX . $player->username,
+                    'Balance' => $player->main_wallet,
+                    'ErrorCode' => 5003,
+                    'ErrorMessage' => 'Stake Already Canceled',
+                ];
+            } else {
+                return [
+                    'AccountName' => self::PREFIX . $player->username,
+                    'Balance' => $player->main_wallet,
+                    'ErrorCode' => 5008,
+                    'ErrorMessage' => 'Stake Already Canceled',
+                ];
+            }
         }
     }
 
@@ -337,7 +336,7 @@ class SBOController extends Controller
 
         if ($player->main_wallet < $amount) {
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 5,
                 'ErrorMessage' => 'Not enough balance',
@@ -358,16 +357,16 @@ class SBOController extends Controller
             $trx->payload = json_encode($payload);
             $trx->save();
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 0,
                 'ErrorMessage' => 'No Error'
             ];
         } else {
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
-                'ErrorCode' => 2005,
+                'ErrorCode' => 5003,
                 'ErrorMessage' => 'Bonus Already Exist',
             ];
         }
@@ -395,7 +394,7 @@ class SBOController extends Controller
 
         if ($player->main_wallet < $amount) {
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 5,
                 'ErrorMessage' => 'Not enough balance',
@@ -416,16 +415,16 @@ class SBOController extends Controller
             $trx->payload = json_encode($payload);
             $trx->save();
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 0,
                 'ErrorMessage' => 'No Error'
             ];
         } else {
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
-                'ErrorCode' => 2004,
+                'ErrorCode' => 5003,
                 'ErrorMessage' => 'Tip Already Exist',
             ];
         }
@@ -464,7 +463,7 @@ class SBOController extends Controller
                     $trx->status = 'void';
                     $trx->save();
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 0,
                         'ErrorMessage' => 'No Error',
@@ -475,14 +474,14 @@ class SBOController extends Controller
                     $trx->status = 'void';
                     $trx->save();
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 0,
                         'ErrorMessage' => 'No Error',
                     ];
                 } else if ($trx->status == 'void') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 2002,
                         'ErrorMessage' => 'Bet Already Canceled',
@@ -529,14 +528,14 @@ class SBOController extends Controller
                             $trx->save();
 
                             return [
-                                'AccountName' => $player->username,
+                                'AccountName' => self::PREFIX . $player->username,
                                 'Balance' => $player->main_wallet,
                                 'ErrorCode' => 0,
                                 'ErrorMessage' => 'No Error',
                             ];
                         } elseif ($current_TxnsStatus == 'void') {
                             return [
-                                'AccountName' => $player->username,
+                                'AccountName' => self::PREFIX . $player->username,
                                 'Balance' => $player->main_wallet,
                                 'ErrorCode' => 2002,
                                 'ErrorMessage' => 'Bet Already Canceled',
@@ -544,7 +543,7 @@ class SBOController extends Controller
                         }
                     } else {
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 6,
                             'ErrorMessage' => 'Bet Not Exist',
@@ -581,14 +580,14 @@ class SBOController extends Controller
                         $trx->save();
 
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 0,
                             'ErrorMessage' => 'No Error',
                         ];
                     } else if ($trx->status == 'void') {
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 0,
                             'ErrorMessage' => 'No Error',
@@ -597,7 +596,7 @@ class SBOController extends Controller
                 }
             } else {
                 $response = [
-                    'AccountName' => $player->username,
+                    'AccountName' => self::PREFIX . $player->username,
                     'Balance' => $player->main_wallet,
                     'ErrorCode' => 6,
                     'ErrorMessage' => 'Bet Not Exist',
@@ -646,7 +645,7 @@ class SBOController extends Controller
                     $trx->save();
 
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 0,
                         'ErrorMessage' => 'No Error',
@@ -667,14 +666,14 @@ class SBOController extends Controller
                     $trx->save();
 
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 0,
                         'ErrorMessage' => 'No Error',
                     ];
                 } else if ($trx->status == 'running') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 2003,
                         'ErrorMessage' => 'Bet Already Rollback',
@@ -707,14 +706,14 @@ class SBOController extends Controller
                     $trx->save();
 
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 0,
                         'ErrorMessage' => 'No Error',
                     ];
                 } else if ($trx->status == 'running') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 2003,
                         'ErrorMessage' => 'Bet Already Rollback',
@@ -722,7 +721,7 @@ class SBOController extends Controller
                 }
             } else {
                 return [
-                    'AccountName' => $player->username,
+                    'AccountName' => self::PREFIX . $player->username,
                     'Balance' => $player->main_wallet,
                     'ErrorCode' => 6,
                     'ErrorMessage' => 'Bet Not Exist',
@@ -766,34 +765,44 @@ class SBOController extends Controller
                         'amount' => $winloss,
                         'before_balance' => $before_balance,
                         'after_balance' => $before_balance + $winloss,
+                        'tranref'   => $player->tranref,
                         'action' => 'SETTLE',
                         'provider' => 'SBO',
-                        'game_type' => 'SPORTBOOK',
+                        'game_type' => 'FOOTBALL',
                         'game_ref' => 'NO REFERENCE',
                         'transaction_ref' => $transfer_code,
                         'player_username' => $player->username,
                     ]);
 
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 0,
                         'ErrorMessage' => 'No Error',
                     ];
                 } else if ($trx->status == 'settled') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 2001,
                         'ErrorMessage' => 'Bet Already Settled'
                     ];
                 } else if ($trx->status == 'void') {
-                    return [
-                        'AccountName' => $player->username,
-                        'Balance' => $player->main_wallet,
-                        'ErrorCode' => 2002,
-                        'ErrorMessage' => 'Bet Already Canceled',
-                    ];
+                    if ($payload['ProductType'] == '3' || $payload['ProductType'] == '5') {
+                        return [
+                            'AccountName' => self::PREFIX . $player->username,
+                            'Balance' => $player->main_wallet,
+                            'ErrorCode' => 2002,
+                            'ErrorMessage' => 'Bet Already Canceled',
+                        ];
+                    } else {
+                        return [
+                            'AccountName' => self::PREFIX . $player->username,
+                            'Balance' => $player->main_wallet,
+                            'ErrorCode' => 2002,
+                            'ErrorMessage' => 'Bet Already Canceled',
+                        ];
+                    }
                 }
             } else {
                 return ['ErrorCode' => 6, 'ErrorMessage' => 'Bet not exists', 'Balance' => 0];
@@ -824,23 +833,24 @@ class SBOController extends Controller
                         'amount' => $winloss,
                         'before_balance' => $before_balance,
                         'after_balance' => $before_balance + $winloss,
+                        'tranref'   => $player->tranref,
                         'action' => 'SETTLE',
                         'provider' => 'SBO',
-                        'game_type' => 'SPORTBOOK',
+                        'game_type' => 'FOOTBALL',
                         'game_ref' => 'NO REFERENCE',
                         'transaction_ref' => $transfer_code,
                         'player_username' => $player->username,
                     ]);
 
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 0,
                         'ErrorMessage' => 'No Error',
                     ];
                 } else if ($trx->status == 'settled') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 2001,
                         'ErrorMessage' => 'Bet Already Settled',
@@ -867,14 +877,14 @@ class SBOController extends Controller
                         $trx->status = 'settled';
                         $trx->save();
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 0,
                             'ErrorMessage' => 'No Error',
                         ];
                     } else {
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 2002,
                             'ErrorMessage' => 'Bet Already Canceled',
@@ -883,7 +893,7 @@ class SBOController extends Controller
                 }
             } else {
                 return [
-                    'AccountName' => $player->username,
+                    'AccountName' => self::PREFIX . $player->username,
                     'Balance' => $player->main_wallet,
                     'ErrorCode' => 6,
                     'ErrorMessage' => 'Bet Not Exist',
@@ -916,7 +926,7 @@ class SBOController extends Controller
 
         if ($player->main_wallet < $amount) {
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 5,
                 'ErrorMessage' => 'Not enough balance',
@@ -930,39 +940,39 @@ class SBOController extends Controller
             if ($trx) {
                 if ($trx->status == 'running') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
-                        'ErrorCode' => 2000,
+                        'ErrorCode' => 5003,
                         'ErrorMessage' => 'Bet Already Exist',
                         'BetAmount' => 0
                     ];
                 } else if ($trx->status == 'settled') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
-                        'ErrorCode' => 2001,
+                        'ErrorCode' => 5003,
                         'ErrorMessage' => 'Bet Already Settled',
                         'BetAmount' => 0
                     ];
                 } else if ($trx->status == 'void') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
-                        'ErrorCode' => 2002,
+                        'ErrorCode' => 5003,
                         'ErrorMessage' => 'Bet Already Canceled',
                         'BetAmount' => 0
                     ];
                 }
             }
 
-            (new Payment())->payAll($player->id, $amount, 'SPORTSBOOK');
             (new Payment())->saveLog([
                 'amount' => $amount,
                 'before_balance' => $before_balance,
                 'after_balance' => $before_balance - $amount,
+                'tranref'   => $player->tranref,
                 'action' => 'BET',
                 'provider' => 'SBO',
-                'game_type' => 'SPORTBOOK',
+                'game_type' => 'FOOTBALL',
                 'game_ref' => 'NO REFERENCE',
                 'transaction_ref' => $transfer_code . ', ' . $transaction_id,
                 'player_username' => $player->username,
@@ -983,7 +993,7 @@ class SBOController extends Controller
             $trx->save();
 
             return [
-                'AccountName' => $player->username,
+                'AccountName' => self::PREFIX . $player->username,
                 'Balance' => $player->main_wallet,
                 'ErrorCode' => 0,
                 'ErrorMessage' => 'No Error',
@@ -1007,7 +1017,7 @@ class SBOController extends Controller
                 $trx->save();
 
                 return [
-                    'AccountName' => $player->username,
+                    'AccountName' => self::PREFIX . $player->username,
                     'Balance' => $player->main_wallet,
                     'ErrorCode' => 0,
                     'ErrorMessage' => 'No Error',
@@ -1028,7 +1038,7 @@ class SBOController extends Controller
                         $trx->save();
 
                         $response = [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 0,
                             'ErrorMessage' => 'No Error',
@@ -1037,7 +1047,7 @@ class SBOController extends Controller
                         return $response;
                     } else {
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 7,
                             'ErrorMessage' => 'Deduct amount must be greater than 1st Deduct',
@@ -1046,17 +1056,17 @@ class SBOController extends Controller
                     }
                 } else if ($trx->status == 'settled') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
-                        'ErrorCode' => 2001,
+                        'ErrorCode' => 5003,
                         'ErrorMessage' => 'Bet Already Settled',
                         'BetAmount' => 0
                     ];
                 } else if ($trx->status == 'void') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
-                        'ErrorCode' => 2002,
+                        'ErrorCode' => 5003,
                         'ErrorMessage' => 'Bet Already Canceled',
                         'BetAmount' => 0
                     ];
@@ -1089,7 +1099,7 @@ class SBOController extends Controller
                 $trx->save();
 
                 return [
-                    'AccountName' => $player->username,
+                    'AccountName' => self::PREFIX . $player->username,
                     'Balance' => $player->main_wallet,
                     'ErrorCode' => 0,
                     'ErrorMessage' => 'No Error',
@@ -1117,7 +1127,7 @@ class SBOController extends Controller
                         $trx->save();
 
                         $response = [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 0,
                             'ErrorMessage' => 'No Error',
@@ -1126,16 +1136,16 @@ class SBOController extends Controller
                         return $response;
                     } else {
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
-                            'ErrorCode' => 2000,
+                            'ErrorCode' => 5003,
                             'ErrorMessage' => 'Bet Already Exist',
                             'BetAmount' => 0
                         ];
                     }
                 } else if ($trx->status == 'settled') {
                     return [
-                        'AccountName' => $player->username,
+                        'AccountName' => self::PREFIX . $player->username,
                         'Balance' => $player->main_wallet,
                         'ErrorCode' => 2001,
                         'ErrorMessage' => 'Bet Already Settled',
@@ -1162,7 +1172,7 @@ class SBOController extends Controller
                         $trx->save();
 
                         $response = [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 0,
                             'ErrorMessage' => 'No Error',
@@ -1171,7 +1181,135 @@ class SBOController extends Controller
                         return $response;
                     } else {
                         return [
-                            'AccountName' => $player->username,
+                            'AccountName' => self::PREFIX . $player->username,
+                            'Balance' => $player->main_wallet,
+                            'ErrorCode' => 2002,
+                            'ErrorMessage' => 'Bet Already Canceled',
+                            'BetAmount' => 0
+                        ];
+                    }
+                }
+            }
+        } else if (preg_match('/10/', $payload['ProductType'])) {
+            $trx = SBO::firstWhere('transfer_code', $transfer_code);
+            if (!$trx) {
+                $player->decrement('main_wallet', $amount);
+
+                $TransactionId = [];
+                $TransactionId[$payload['TransactionId']] = [
+                    'amount' => $payload['Amount'],
+                    'status' => 'running'
+                ];
+
+                $txns_3rd_party = json_encode($TransactionId);
+
+                $trx = new SBO();
+                $trx->transfer_code = $transfer_code;
+                $trx->transaction_id = $transaction_id;
+                $trx->product_type = $product_type;
+                $trx->status = 'running';
+                $trx->amount = $amount;
+                $trx->profit = $amount * -1;
+                $trx->username = $player->username;
+                $trx->txns_3rd_party = $txns_3rd_party;
+                $trx->action = 'bet';
+                $trx->payload = json_encode($payload);
+                $trx->save();
+
+                return [
+                    'AccountName' => self::PREFIX . $player->username,
+                    'Balance' => $player->main_wallet,
+                    'ErrorCode' => 0,
+                    'ErrorMessage' => 'No Error',
+                    'BetAmount' => $amount
+                ];
+            } else {
+                if ($trx->status == 'running') {
+                    $txns_3rd_party = json_decode($trx->txns_3rd_party, true);
+                    if (!isset($txns_3rd_party[$transaction_id])) {
+                        $current_amount = $trx->amount;
+                        $new_amount = $current_amount + $amount;
+                        $new_profit = $new_amount * -1;
+
+                        $txns_3rd_party[$transaction_id] = [
+                            'amount' => $amount,
+                            'status' => 'running'
+                        ];
+
+                        $new_txns_3rd_party = json_encode($txns_3rd_party);
+
+                        $player->decrement('main_wallet', $amount);
+                        $trx->amount = $new_amount;
+                        $trx->txns_3rd_party = $new_txns_3rd_party;
+                        $trx->profit = $new_profit;
+                        $trx->save();
+
+                        $response = [
+                            'AccountName' => self::PREFIX . $player->username,
+                            'Balance' => $player->main_wallet,
+                            'ErrorCode' => 0,
+                            'ErrorMessage' => 'No Error',
+                            'BetAmount' => $new_amount
+                        ];
+                        return $response;
+                    } else {
+                        if ($txns_3rd_party[$transaction_id]) {
+                            return [
+                                'AccountName' => self::PREFIX . $player->username,
+                                'Balance' => $player->main_wallet,
+                                'ErrorCode' => 999,
+                                'ErrorMessage' => 'Bet Already Exist',
+                                'BetAmount' => 0
+                            ];
+                        } else {
+                            return [
+                                'AccountName' => self::PREFIX . $player->username,
+                                'Balance' => $player->main_wallet,
+                                'ErrorCode' => 5003,
+                                'ErrorMessage' => 'Bet Already Exist',
+                                'BetAmount' => 0
+                            ];
+                        }
+                    }
+                } else if ($trx->status == 'settled') {
+                    return [
+                        'AccountName' => self::PREFIX . $player->username,
+                        'Balance' => $player->main_wallet,
+                        'ErrorCode' => 2001,
+                        'ErrorMessage' => 'Bet Already Settled',
+                        'BetAmount' => 0
+                    ];
+                } else if ($trx->status == 'void') {
+                    $txns_3rd_party = json_decode($trx->txns_3rd_party, true);
+                    if (!isset($txns_3rd_party[$transaction_id])) {
+                        $current_amount = $trx->amount;
+                        $new_amount = $current_amount + $amount;
+                        $new_profit = $new_amount * -1;
+
+                        $txns_3rd_party[$transaction_id] = [
+                            'amount' => $amount,
+                            'status' => 'running'
+                        ];
+
+                        $new_txns_3rd_party = json_encode($txns_3rd_party);
+
+                        $player->decrement('main_wallet', $amount);
+                        $trx->amount = $new_amount;
+                        $trx->txns_3rd_party = $new_txns_3rd_party;
+                        $trx->profit = $new_profit;
+                        $trx->save();
+
+                        $response = [
+                            'AccountName' => self::PREFIX . $player->username,
+                            'Balance' => $player->main_wallet,
+                            'ErrorCode' => 0,
+                            'ErrorMessage' => 'No Error',
+                            'BetAmount' => $new_amount
+                        ];
+                        return $response;
+                    } else {
+                        return [
+                            'AccountName' => self::PREFIX . $player->username,
                             'Balance' => $player->main_wallet,
                             'ErrorCode' => 2002,
                             'ErrorMessage' => 'Bet Already Canceled',
@@ -1205,7 +1343,7 @@ class SBOController extends Controller
         }
 
         $response =  [
-            'AccountName' => $player->username,
+            'AccountName' => self::PREFIX . $player->username,
             'Balance' => $player->main_wallet,
             'ErrorCode' => self::NO_ERROR,
             'ErrorMessage' => 'No Error'

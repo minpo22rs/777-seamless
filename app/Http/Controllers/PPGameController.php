@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Log;
 class PPGameController extends Controller
 {
     //
-    private $hostGame = "https://tg168-sg0.ppgames.net";
+    private $hostGame = "https://api-sg0.ppgames.net";
     private $host = "https://api-sg0.ppgames.net/IntegrationService/v3/http/CasinoGameAPI";
-    private $secureLogin = "tg168_cabin88";
-    private $SecretKey = "D08b2bD268214a0c";
+    private $secureLogin = "sg_777bet";
+    private $SecretKey = "4868F92d9a674917";
     private $currencyCode = "THB";
 
     private function encryptBody($queryString)
@@ -49,7 +49,7 @@ class PPGameController extends Controller
         }
         $userToken = $user->token;
 
-        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=th&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://nasavg.com/lobby/pp");
+        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=th&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://mm777bet.com");
 
         $url = "{$this->hostGame}/gs2c/playGame.do?key={$urlValue}&stylename={$this->secureLogin}";
         return redirect($url);
@@ -264,6 +264,18 @@ class PPGameController extends Controller
                 }
             }
 
+            (new Payment())->saveLog([
+                'amount' => $request->amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'BET',
+                'provider' => 'PP',
+                'game_type' => is_numeric($request->gameId) ? 'CASINO' : 'SLOT',
+                'game_ref' => '',
+                'transaction_ref' => $request->reference,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
 
             return [
@@ -471,6 +483,20 @@ class PPGameController extends Controller
             } else {
                 $transactionId = $jackpotWinTransaction->id;
             }
+
+
+            (new Payment())->saveLog([
+                'amount' => $request->amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'JACKPOT_WIN',
+                'provider' => 'PP',
+                'game_type' => is_numeric($request->gameId) ? 'CASINO' : 'SLOT',
+                'game_ref' => $reference,
+                'transaction_ref' => $jackpotId,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
 
             return [
@@ -544,6 +570,19 @@ class PPGameController extends Controller
             } else {
                 $transactionId = $promoWinTransaction->id;
             }
+
+            (new Payment())->saveLog([
+                'amount' => $request->amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'PROMO_WIN',
+                'provider' => 'PP',
+                'game_type' => is_numeric($request->gameId) ? 'CASINO' : 'SLOT',
+                'game_ref' => $reference,
+                'transaction_ref' => $campaignId,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
 
             return [

@@ -16,9 +16,9 @@ use Ramsey\Uuid\Uuid;
 class EvoplayController extends Controller
 {
 
-    private $SYSTEM_ID = "5467";
+    private $SYSTEM_ID = "7720";
     private $VERSION = 1;
-    private $SYSTEM_KEY = "324b54161e4856049f5e66b9f5bf3351";
+    private $SYSTEM_KEY = "3eb6347e2eab667d9ed27056aec92444";
     private $CURRENCY = "THB";
     private $HOST = "https://api.8provider.com";
 
@@ -101,8 +101,8 @@ class EvoplayController extends Controller
             "game" => $game_id,
             "settings" => [
                 "user_id" => $user->username,
-                "exit_url" => 'https://nasavg.com/',
-                "cash_url" => 'https://evoplay.games'
+                "exit_url" => 'https://mm777bet.com',
+                "cash_url" => 'https://mm777bet.com'
             ],
             "denomination" => 1,
             "currency" => $this->CURRENCY,

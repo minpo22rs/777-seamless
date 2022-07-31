@@ -16,7 +16,7 @@ class DevAmbController extends Controller
 {
     private $host = "https://staging.ambpoker-api.com";
     private $key = "e3cdd30bfc11fc60afe65c32f55034be";
-    private $agentId = "nasavg";
+    private $agentId = "mm777bet";
 
     public function devdev()
     {

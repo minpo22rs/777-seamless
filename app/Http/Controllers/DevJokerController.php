@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class DevJokerController extends Controller
 {
-    private $lobbyURL = "https://nasavg.com/play/joker";
+    private $lobbyURL = "https://mm777bet.com";
     private $host = "http://api688.net/seamless";
     private $AppID = "TGFV";
     private $SecretKey = "qc8y9k63x55wr";

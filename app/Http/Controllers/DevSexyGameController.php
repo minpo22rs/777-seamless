@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\Log;
 class DevSexyGameController extends Controller
 {
     private $host = "https://tttint.onlinegames22.com";
-    private $certCode = "efKnvJ7YJjhVMfUsIeM";
-    private $agentId = "cabin88";
+    private $certCode = "bcM9aggZlcX28Qu48v0";
+    private $agentId = "mm777bet";
     private $currencyCode = "THB";
     private $language = "th";
-    private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}} ';
+    private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
 
     public function login($username, $gameType)
     {
@@ -78,7 +78,7 @@ class DevSexyGameController extends Controller
             ]);
             // echo $res->getStatusCode();
             // echo $res->getHeader('content-type')[0];
-            // echo $res->getBody();
+            // return $res->getBody();
             $response = $res->getBody();
             if ($response) {
                 $json = json_decode($response);
@@ -89,6 +89,7 @@ class DevSexyGameController extends Controller
                     return $this->login($username, $gameType);
                 } else if ($json->status == '1002') {
                     $responsenewmember = $this->createMember($username);
+                    return $responsenewmember;
                     if (!$responsenewmember) {
                         return "error create member";
                     } else if ($responsenewmember->status == '0000') {
@@ -111,17 +112,21 @@ class DevSexyGameController extends Controller
     {
         try {
             $client = new Client();
-            $res = $client->request('POST', $this->host . '/wallet/createMember', [
-                'form_params' => [
-                    'cert' =>  $this->certCode,
-                    'agentId' =>  $this->agentId,
-                    'userId' =>  $username,
-                    'currency' =>  $this->currencyCode,
-                    'language' =>  $this->language,
-                    'betLimit' =>  $this->betLimit,
-                ]
+            $url = $this->host . '/wallet/createMember';
+            $form_params = [
+                'cert' =>  $this->certCode,
+                'agentId' =>  $this->agentId,
+                'userId' =>  $username,
+                'currency' =>  $this->currencyCode,
+                'language' =>  $this->language,
+                'betLimit' =>  $this->betLimit,
+            ];
+            // return $form_params;
+            $res = $client->request('POST', $url, [
+                'form_params' => $form_params
             ]);
             $response = $res->getBody()->getContents();
+            // return $response;
             if ($response) {
                 $json = json_decode($response);
                 return $json;
@@ -168,7 +173,7 @@ class DevSexyGameController extends Controller
 
                     return [
                         "userId" => $username,
-                        "balance" => round($main_wallet, 2),
+                        "balance" => $main_wallet,
                         "balanceTs" =>  $this->tsDateISOString(),
                         "status" => "0000"
                     ];
@@ -201,6 +206,18 @@ class DevSexyGameController extends Controller
                                     ]);
 
                                     (new Payment())->payAll($userWallet->id, $element['betAmount'], 'CASINO');
+                                    $payload = $element;
+                                    (new Payment())->saveLog([
+                                        'amount' => $payload['betAmount'],
+                                        'before_balance' => $wallet_amount_before,
+                                        'after_balance' => $wallet_amount_before - $payload['betAmount'],
+                                        'action' => 'BET',
+                                        'provider' => $payload["platform"],
+                                        'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
+                                        'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
+                                        'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
+                                        'player_username' => $payload['userId'],
+                                    ]);
 
                                     if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
@@ -220,9 +237,10 @@ class DevSexyGameController extends Controller
                             throw new \Exception('Invalid user Id', 1000);
                         }
                     }
+
                     DB::commit();
                     return [
-                        "balance" => round($wallet_amount_after, 2),
+                        "balance" => $wallet_amount_after,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
@@ -274,7 +292,7 @@ class DevSexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => round($wallet_amount_after, 2),
+                        "balance" => $wallet_amount_after,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
@@ -378,7 +396,7 @@ class DevSexyGameController extends Controller
                         throw new \Exception('Invalid user Id', 1000);
                     }
                     return [
-                        "balance" => round($main_wallet, 2),
+                        "balance" => $main_wallet,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
@@ -411,6 +429,20 @@ class DevSexyGameController extends Controller
 
                                 User::where('username', $element['userId'])->update([
                                     'main_wallet' => $wallet_amount_after
+                                ]);
+
+                                $payload = $element;
+                                $winloss = !empty($payload["winAmount"]) ? $payload["winAmount"] : 0;
+                                (new Payment())->saveLog([
+                                    'amount' => $winloss,
+                                    'before_balance' => $wallet_amount_before,
+                                    'after_balance' => $wallet_amount_before + $winloss,
+                                    'action' => 'SETTLE',
+                                    'provider' => $payload["platform"],
+                                    'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
+                                    'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
+                                    'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
+                                    'player_username' => $payload['userId'],
                                 ]);
 
                                 Log::info([
@@ -625,7 +657,7 @@ class DevSexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => round($wallet_amount_after, 2),
+                        "balance" => $wallet_amount_after,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
@@ -671,7 +703,7 @@ class DevSexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => round($wallet_amount_after, 2),
+                        "balance" => $wallet_amount_after,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000"
                     ];
@@ -715,7 +747,7 @@ class DevSexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => round($wallet_amount_after, 2),
+                        "balance" => $wallet_amount_after,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000",
                         "desc" => "success",
@@ -734,6 +766,11 @@ class DevSexyGameController extends Controller
                     foreach ($message['txns'] as $element) {
                         $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
+
+                            if ($userWallet->main_wallet <= 0) {
+                                throw new \Exception('Not Enough Balance', 1018);
+                            }
+
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
 
@@ -757,7 +794,7 @@ class DevSexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => round($wallet_amount_after, 2),
+                        "balance" => $wallet_amount_after,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000",
                         "desc" => "success",
@@ -804,7 +841,7 @@ class DevSexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "balance" => round($wallet_amount_after, 2),
+                        "balance" => $wallet_amount_after,
                         "balanceTs" => $this->tsDateISOString(),
                         "status" => "0000",
                         "desc" => "success",

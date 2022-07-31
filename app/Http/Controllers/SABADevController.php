@@ -31,17 +31,17 @@ class SABADevController extends Controller
     public static function routes()
     {
 
-        Route::get('/saba/dev/launch/{token}', self::CONTROLLER_NAME . '@launch');
-        Route::get('/saba/dev', self::CONTROLLER_NAME . '@index');
-        Route::post('/saba/dev/getbalance', self::CONTROLLER_NAME . '@getBalance');
-        Route::post('/saba/dev/placebet', self::CONTROLLER_NAME . '@placeBet');
-        Route::post('/saba/dev/confirmbet', self::CONTROLLER_NAME . '@confirmBet');
-        Route::post('/saba/dev/cancelbet', self::CONTROLLER_NAME . '@cancelBet');
-        Route::post('/saba/dev/settle', self::CONTROLLER_NAME . '@settle');
-        Route::post('/saba/dev/resettle', self::CONTROLLER_NAME . '@reSettle');
-        Route::post('/saba/dev/unsettle', self::CONTROLLER_NAME . '@unSettle');
-        Route::post('/saba/dev/placebetparlay', self::CONTROLLER_NAME . '@placeBetParlay');
-        Route::post('/saba/dev/confirmbetparlay', self::CONTROLLER_NAME . '@confirmBetParlay');
+        Route::get('/ibc/dev/launch/{token}', self::CONTROLLER_NAME . '@launch');
+        Route::get('/ibc/dev', self::CONTROLLER_NAME . '@index');
+        Route::post('/ibc/dev/getbalance', self::CONTROLLER_NAME . '@getBalance');
+        Route::post('/ibc/dev/placebet', self::CONTROLLER_NAME . '@placeBet');
+        Route::post('/ibc/dev/confirmbet', self::CONTROLLER_NAME . '@confirmBet');
+        Route::post('/ibc/dev/cancelbet', self::CONTROLLER_NAME . '@cancelBet');
+        Route::post('/ibc/dev/settle', self::CONTROLLER_NAME . '@settle');
+        Route::post('/ibc/dev/resettle', self::CONTROLLER_NAME . '@reSettle');
+        Route::post('/ibc/dev/unsettle', self::CONTROLLER_NAME . '@unSettle');
+        Route::post('/ibc/dev/placebetparlay', self::CONTROLLER_NAME . '@placeBetParlay');
+        Route::post('/ibc/dev/confirmbetparlay', self::CONTROLLER_NAME . '@confirmBetParlay');
     }
 
     public function confirmBetParlay(Request $request)

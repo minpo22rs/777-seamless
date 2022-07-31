@@ -25,6 +25,12 @@ use Illuminate\Support\Facades\Storage;
 */
 
 $router->get('/hello-world', function () use ($router) {
+    $whiteListIPs = ['54.255.110.219', '54.179.29.18', '13.213.115.59'];
+
+    if(!in_array('54.255.110.219', $whiteListIPs)) {
+        return "Not Allow";
+    }
+
     return " 🌏 Hello, World!";
 });
 
@@ -39,14 +45,14 @@ HuayDragonController::routes();
 
 $router->get('/pragmatic/launch/{userToken}/{gameId}', 'PPGameController@login');
 $router->get('/pragmatic', 'PPGameController@index');
-$router->post('/pragmatic/authenticate', 'PPGameController@auth');
-$router->post('/pragmatic/balance', 'PPGameController@balance');
-$router->post('/pragmatic/bet', 'PPGameController@bet');
-$router->post('/pragmatic/result', 'PPGameController@settle');
-$router->post('/pragmatic/bonusWin', 'PPGameController@bonusWin');
-$router->post('/pragmatic/jackpotWin', 'PPGameController@jackpotWin');
-$router->post('/pragmatic/refund', 'PPGameController@cancelBet');
-$router->post('/pragmatic/promoWin', 'PPGameController@promoWin');
+$router->post('/pragmatic/authenticate.html', 'PPGameController@auth');
+$router->post('/pragmatic/balance.html', 'PPGameController@balance');
+$router->post('/pragmatic/bet.html', 'PPGameController@bet');
+$router->post('/pragmatic/result.html', 'PPGameController@settle');
+$router->post('/pragmatic/bonusWin.html', 'PPGameController@bonusWin');
+$router->post('/pragmatic/jackpotWin.html', 'PPGameController@jackpotWin');
+$router->post('/pragmatic/refund.html', 'PPGameController@cancelBet');
+$router->post('/pragmatic/promoWin.html', 'PPGameController@promoWin');
 
 $router->get('/awc/launch/{username}/{gameType}', 'SexyGameController@login');
 $router->post('/awc', 'SexyGameController@getBalance');
@@ -81,40 +87,18 @@ $router->post('/amb/void', 'AmbController@voidSettle');
 
 $account = [
     'deposit' => [
-        'deviceId' => '604a4f9c-5024-4af6-9035-4cca5f38f392',
-        'pin' => '252525',
-        'accountNo' => '1922431236',
+        'deviceId' => '7a59a075-0194-46bd-9bc3-65b77540abeb',
+        'refreshToken' => 'c1d4492d-8745-47f8-8ce3-9c63d2aff718',
+        'accountNo' => '1922431294',
     ],
     'withdraw' => [
-        'deviceId' => 'd9c1df03-d37f-4c82-ac94-8d0cf6b272fd',
-        'pin' => '252525',
-        'accountNo' => '1222391241',
-    ],
-    // ใช้สำหรับอ่านชื่อบัญชี
-    'another1' => [
-        'deviceId' => '604a4f9c-5024-4af6-9035-4cca5f38f392',
-        'pin' => '252525',
-        'accountNo' => '1922431236',
-    ],
+        'deviceId' => '510b717c-bbba-4d12-9d6f-80ead59160e3',
+        'refreshToken' => '904d0d23-ed59-4603-9d7e-8ffd66f953b3',
+        'accountNo' => '1922431105',
+    ]
 ];
 
 $bankSecretKey = env('BANK_SECRET_KEY', '');
-
-$router->get('/secret/bank/scb/verify-account', function (Request $request) use ($bankSecretKey, $account) {
-    // สำหรับดึงรายการฝาก
-    if ($request->secretKey != $bankSecretKey) {
-        return ['message' => 'Your secret key is not valid'];
-    }
-
-    $bank = $request->bank;
-    $accountNo = $request->accountNo;
-
-    $scb = new SCBEasyAPI();
-    $scb->setAccount($account[$request->accountType]['deviceId'], $account[$request->accountType]['pin'], $account[$request->accountType]['accountNo']);
-    if ($scb->login()) {
-        return json_encode($scb->verifyAccount($bank, $accountNo));
-    }
-});
 
 $router->get('/secret/bank/scb', function (Request $request) use ($bankSecretKey, $account) {
     // สำหรับดึงรายการฝาก
@@ -123,7 +107,7 @@ $router->get('/secret/bank/scb', function (Request $request) use ($bankSecretKey
     }
 
     $scb = new SCBEasyAPI();
-    $scb->setAccount($account[$request->accountType]['deviceId'], $account[$request->accountType]['pin'], $account[$request->accountType]['accountNo']);
+    $scb->setAccount($account[$request->accountType]['deviceId'], $account[$request->accountType]['refreshToken'], $account[$request->accountType]['accountNo']);
     if ($scb->login()) {
         return json_encode($scb->transactions());
     }
@@ -136,9 +120,10 @@ $router->post('/secret/bank/scb', function (Request $request) use ($bankSecretKe
     }
 
     $scb = new SCBEasyAPI();
-    $scb->setAccount($account[$request->accountType]['deviceId'], $account[$request->accountType]['pin'], $account[$request->accountType]['accountNo']);
+    $scb->setAccount($account[$request->accountType]['deviceId'], $account[$request->accountType]['refreshToken'], $account[$request->accountType]['accountNo']);
     if ($scb->login()) {
         return json_encode($scb->transfer($request->bank, $request->accountNumber, $request->amount));
     }
     
+
 });

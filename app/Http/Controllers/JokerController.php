@@ -8,15 +8,14 @@ use App\Models\User;
 use App\Models\Joker;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class JokerController extends Controller
 {
-    private $lobbyURL = "https://nasavg.com/play/joker";
+    private $lobbyURL = "https://mm777bet.com";
     private $host = "http://api688.net/seamless";
 
-    private $AppID = "F8FH";
-    private $SecretKey = "rtxiaek7uahdh";
+    private $AppID = "FB5T";
+    private $SecretKey = "rtxsngikd41ah";
 
     private function encryptBody($array_params)
     {
@@ -310,6 +309,18 @@ class JokerController extends Controller
                 }
             }
 
+            (new Payment())->saveLog([
+                'amount' => $request->amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'CANCEL',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => 'รหัสยกเลิก: ' . $cancelBetid . ', รอบ: ' . $roundid,
+                'transaction_ref' => $cancelBetid,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
             return [
                 'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
@@ -425,6 +436,19 @@ class JokerController extends Controller
                     throw new \Exception('Fail (System Error)', 1000);
                 }
             }
+
+            (new Payment())->saveLog([
+                'amount' => $amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'BONUS_WIN',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => $request->gamecode . ' รอบ: ' . $roundid,
+                'transaction_ref' => $request->id,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
             return [
                 'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
@@ -472,6 +496,19 @@ class JokerController extends Controller
                     throw new \Exception('Fail (System Error)', 1000);
                 }
             }
+
+            (new Payment())->saveLog([
+                'amount' => $amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'JACKPOT_WIN',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => $request->gamecode . ' รอบ: ' . $roundid,
+                'transaction_ref' => $request->id,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
             return [
                 'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),
@@ -514,11 +551,23 @@ class JokerController extends Controller
                     User::where('username', $username)->update([
                         'main_wallet' => $wallet_amount_after
                     ]);
-                    /// save log 
+                    
                     $logres = $this->savaTransaction("withdraw", $wallet_amount_before, $wallet_amount_after, $request);
                     if (!$logres) {
                         throw new \Exception('Fail (System Error)', 1000);
                     }
+
+                    (new Payment())->saveLog([
+                        'amount' => $amount,
+                        'before_balance' => $wallet_amount_before,
+                        'after_balance' => $wallet_amount_after,
+                        'action' => 'TRANSFER',
+                        'provider' => 'JOKER',
+                        'game_type' => 'SLOT',
+                        'game_ref' => 'โยกเงินออกจากเกม',
+                        'transaction_ref' => $txnRefId,
+                        'player_username' => $username,
+                    ]);
                 }
             } else {
                 DB::commit();
@@ -575,6 +624,19 @@ class JokerController extends Controller
                     throw new \Exception('Fail (System Error)', 1000);
                 }
             }
+
+            (new Payment())->saveLog([
+                'amount' => $amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'TRANSFER',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => 'โยกเงินเข้าเกม',
+                'transaction_ref' => $txnRefId,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
             return [
                 'Balance' => number_format((float) $wallet_amount_after, 2, '.', ''),

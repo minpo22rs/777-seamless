@@ -17,7 +17,7 @@ class DevJiliGamController extends Controller
 {
     //
     private $host = "https://wb-api.jlfafafa2.com";
-    private $agentId = "ZF084_NasaVG";
+    private $agentId = "ZF084_MM777BET";
     private $agentKey = "8fc9781160422a4caae0e18107e4e27f41f287aa";
     private $currencyCode = "THB";
     private $gameLang = "en-US";

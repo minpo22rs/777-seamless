@@ -17,8 +17,8 @@ use App\Models\User;
 class Rich88GameController extends Controller
 {
     private $HOST = "https://lobbycenter.ark8899.com";
-    private $PrivateKey = "UCZTNp1SAOG3KZuGCgX4KCs3j6IzsXZv";
-    private $PFID = "acthb_CABI";
+    private $PrivateKey = "VvfIMzN1J90x53wsPvrHvxJsidUchTiJ";
+    private $PFID = "acthb_777B";
 
     const CONTROLLER_NAME = 'Rich88GameController';
 
@@ -26,10 +26,10 @@ class Rich88GameController extends Controller
     {
         Route::get('/rich88/', self::CONTROLLER_NAME . '@dev');
         Route::get('/rich88/session_id', self::CONTROLLER_NAME . '@getSessionId');
+        Route::get('/rich88/{username}', self::CONTROLLER_NAME . '@loginGame');
         Route::get('/rich88/balance/{account}', self::CONTROLLER_NAME . '@getBalance');
         Route::post('/rich88/transfer', self::CONTROLLER_NAME . '@transfer');
         Route::post('/rich88/award_activity', self::CONTROLLER_NAME . '@bonusWin');
-        Route::get('/rich88/{username}', self::CONTROLLER_NAME . '@loginGame');
         Route::post('/rich88/v2/platform/single_wallet/rollback', self::CONTROLLER_NAME . '@cancelWithdraw');
     }
 
@@ -363,6 +363,18 @@ class Rich88GameController extends Controller
                 }
             }
 
+            (new Payment())->saveLog([
+                'amount' => $amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'BONUS_WIN',
+                'provider' => 'RICH88',
+                'game_type' => 'SLOT',
+                'game_ref' => $activity_type,
+                'transaction_ref' => $award_id,
+                'player_username' => $username,
+            ]);
+
             DB::commit();
             return [
                 "code" => 0,
@@ -422,6 +434,18 @@ class Rich88GameController extends Controller
             } else {
                 throw new \Exception('Withdraw transfer ID is non-existent', 22005);
             }
+
+            (new Payment())->saveLog([
+                'amount' => $transaction_bet->amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'CANCEL',
+                'provider' => 'RICH88',
+                'game_type' => 'SLOT',
+                'game_ref' => $game_code,
+                'transaction_ref' => $record_id,
+                'player_username' => $transaction_bet->username,
+            ]);
 
 
             DB::commit();

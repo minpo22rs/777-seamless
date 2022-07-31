@@ -16,10 +16,11 @@ class JiliGamController extends Controller
 {
     //
     private $host = "https://wb-api.jlfafafa2.com";
-    private $agentId = "ZF084_Cabin88";
-    private $agentKey = "76b775ed18f7a95171053fc72f8f67e13068c612";
+    private $agentId = "ZF094_ 777bet";
+    private $agentKey = "0cb55ba8492209aaa5ca4dffe7d9b9741f46450b";
     private $currencyCode = "THB";
     private $gameLang = "en-US";
+    private $PREFIX = '77B';
 
     private function encryptBody($queryString)
     {
@@ -81,6 +82,10 @@ class JiliGamController extends Controller
                     "Key" =>  $key,
                 ]
             ]);
+            // return ['queryString' => $queryString, 'url' => $this->host . "/singleWallet/LoginWithoutRedirect?{$queryString}&Key={$key}", "form_params" => [
+            //     "AgentId" =>  $this->agentId,
+            //     "Key" =>  $key,
+            // ]];
             // echo $res->getStatusCode();
             // echo $res->getHeader("content-type")[0];
             // return $res->getBody();
@@ -120,7 +125,7 @@ class JiliGamController extends Controller
         return [
             "errorCode" => 0,
             "message" => "success",
-            "username" => $user->username,
+            "username" => $this->PREFIX . $user->username,
             "currency" => $this->currencyCode,
             "balance" => $user->main_wallet,
             "token" => $user->token,
@@ -234,7 +239,7 @@ class JiliGamController extends Controller
             if ($betAmount != $winloseAmount) {
                 $cancelBet = $this->checkTransactionHistory('cancelBet', $token, $reqId);
                 if (!$cancelBet) {
-                    $wallet_amount_after = $wallet_amount_after + $betAmount - $winloseAmount;
+                    $wallet_amount_after = $wallet_amount_after + $betAmount;
                     User::where('username', $username)->update([
                         'main_wallet' => $wallet_amount_after
                     ]);
@@ -245,6 +250,19 @@ class JiliGamController extends Controller
                     throw new \Exception('Already accepted', 1);
                 }
             }
+
+            (new Payment())->saveLog([
+                'amount' => $request->betAmount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'CANCEL',
+                'provider' => 'JILI',
+                'game_type' => 'SLOT',
+                'game_ref' => 'คืนเงิน: ' . $request->betAmount,
+                'transaction_ref' => '',
+                'player_username' => $username,
+            ]);
+
             DB::commit();
             return [
                 "errorCode" => 0,
