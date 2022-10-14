@@ -23,8 +23,6 @@ class JokerController extends Controller
         $array = array_change_key_case($array, CASE_LOWER);
         ksort($array);
 
-        // print_r($array);
-
         $rawData = '';
         foreach ($array as $Key => $Value) {
             $rawData .=  $Key . '=' . $Value . '&';
@@ -33,25 +31,30 @@ class JokerController extends Controller
         $rawData = substr($rawData, 0, -1);
         $rawData .= $this->SecretKey;
 
-        // echo "rawData ==>" . $rawData . "<br/>";
-
         $hash = md5($rawData);
         $postData = $array;
         $postData['Hash'] = $hash;
         return $postData;
     }
 
-    public function devdev(Request $request)
-    {
-        // $rawData =  "appid=TFJN&timestamp=1591948666039&username=S1688000083n3hioot5guhc";
-        // return  $bodyContent = $request->getContent();
-        // return md5($rawData);
-    }
-
     public function play($username, $gameCode)
     {
-        $url = "https://www.gwc688.net/PlayGame?token=$username&appid={$this->AppID}&gameCode=$gameCode&language=en&mobile=false&redirectUrl={$this->lobbyURL}";
-        return redirect($url);
+        $playerToken = $username;
+        $player = User::where('token', $playerToken)->first();
+
+        $appID = $this->AppID;
+
+        if (!$player) {
+            return response()->json(['message' => 'Player not found'], 400);
+        }
+
+        $playerCurrency = $player->currency;
+        if ($playerCurrency == 'MMK') {
+            $appID = "FB93";
+        }
+
+        $launcherURL = "https://www.gwc688.net/PlayGame?token=$playerToken&appid=$appID&gameCode=$gameCode&language=en&mobile=false&redirectUrl=$this->lobbyURL";
+        return redirect($launcherURL);
     }
 
     public function index()
@@ -551,7 +554,7 @@ class JokerController extends Controller
                     User::where('username', $username)->update([
                         'main_wallet' => $wallet_amount_after
                     ]);
-                    
+
                     $logres = $this->savaTransaction("withdraw", $wallet_amount_before, $wallet_amount_after, $request);
                     if (!$logres) {
                         throw new \Exception('Fail (System Error)', 1000);

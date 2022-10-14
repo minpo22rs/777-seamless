@@ -24,7 +24,7 @@ class SBOController extends Controller
     const NOT_ENOUGHT_BALANCE = 5;
     const BET_NOT_EXIST = 6;
     const ALREADY_ROOLBACK = 2003;
-    const PREFIX = '77B';
+    const PREFIX = '777B';
 
     protected function buildFailedValidationResponse(Request $request, $errors)
     {
@@ -57,7 +57,7 @@ class SBOController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'mm777bet_prod',
+            'Username' => '777bet_',
             'Password' => '12345Aa',
             'Currency' => 'THB',
             'Min' => 1,
@@ -74,6 +74,7 @@ class SBOController extends Controller
     public function launch($token, $mode)
     {
         $player = User::firstWhere('token', $token);
+        $mode = 'desktop';
 
         $username = self::PREFIX . $player->username;
         $loggedIn = $this->login($username);
@@ -118,7 +119,7 @@ class SBOController extends Controller
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
             'Username' => $username,
-            'Agent' => 'mm777bet_prod',
+            'Agent' => '777bet_',
         ];
 
         $response = Http::post($url, $payload);
@@ -146,7 +147,7 @@ class SBOController extends Controller
         $payload = [
             'CompanyKey' => self::COMPANY_KEY,
             'ServerId' => (string) time(),
-            'Username' => 'mm777bet_prod',
+            'Username' => '777bet_',
             'Min' => 1,
             'Max' => 5000,
             'MaxPerMatch' => 20000,

@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Log;
 class DevSexyGameController extends Controller
 {
     private $host = "https://tttint.onlinegames22.com";
-    private $certCode = "bcM9aggZlcX28Qu48v0";
-    private $agentId = "mm777bet";
-    private $currencyCode = "THB";
+    private $certCode = "mTsdkkiGm80Y7ePtY3V";
+    private $agentId = "777bet";
+    private $currencyCode = "MMK";
     private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
 
@@ -31,6 +31,7 @@ class DevSexyGameController extends Controller
                 'cert' =>  $this->certCode,
                 'agentId' =>  $this->agentId,
                 'userId' =>  $username,
+                'gameCode'   => 'MX-LIVE-001',
                 'gameType' =>  'LIVE',
                 'platform' =>  'SEXYBCRT',
                 'isMobileLogin' =>  true,
@@ -76,20 +77,15 @@ class DevSexyGameController extends Controller
             $res = $client->request('POST', $this->host . '/wallet/' . $method, [
                 'form_params' => $form_params
             ]);
-            // echo $res->getStatusCode();
-            // echo $res->getHeader('content-type')[0];
-            // return $res->getBody();
             $response = $res->getBody();
             if ($response) {
                 $json = json_decode($response);
                 if ($json->status == '0000') {
                     return redirect($json->url);
                 } else if ($json->status == '1028') {
-                    //1028 = Unable to proceed. please try again later
                     return $this->login($username, $gameType);
                 } else if ($json->status == '1002') {
-                    $responsenewmember = $this->createMember($username);
-                    return $responsenewmember;
+                    return $responsenewmember = $this->createMember($username);
                     if (!$responsenewmember) {
                         return "error create member";
                     } else if ($responsenewmember->status == '0000') {
@@ -111,6 +107,10 @@ class DevSexyGameController extends Controller
     private function createMember($username)
     {
         try {
+            $betLimit = $this->betLimit;
+            if ($this->currencyCode == 'MMK') {
+                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[262501,262502,262503,262504,262505,262506]}}}';
+            }
             $client = new Client();
             $url = $this->host . '/wallet/createMember';
             $form_params = [
@@ -119,14 +119,12 @@ class DevSexyGameController extends Controller
                 'userId' =>  $username,
                 'currency' =>  $this->currencyCode,
                 'language' =>  $this->language,
-                'betLimit' =>  $this->betLimit,
+                'betLimit' =>  $betLimit,
             ];
-            // return $form_params;
             $res = $client->request('POST', $url, [
                 'form_params' => $form_params
             ]);
             $response = $res->getBody()->getContents();
-            // return $response;
             if ($response) {
                 $json = json_decode($response);
                 return $json;
@@ -169,8 +167,6 @@ class DevSexyGameController extends Controller
                     } else {
                         throw new \Exception('Invalid user Id', 1000);
                     }
-
-
                     return [
                         "userId" => $username,
                         "balance" => $main_wallet,

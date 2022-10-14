@@ -13,11 +13,10 @@ use Illuminate\Support\Facades\Log;
 class PPGameController extends Controller
 {
     //
-    private $hostGame = "https://api-sg0.ppgames.net";
+    private $hostGame = "https://scamogroup-sg0.ppgames.net";
     private $host = "https://api-sg0.ppgames.net/IntegrationService/v3/http/CasinoGameAPI";
     private $secureLogin = "sg_777bet";
     private $SecretKey = "4868F92d9a674917";
-    private $currencyCode = "THB";
 
     private function encryptBody($queryString)
     {
@@ -52,6 +51,7 @@ class PPGameController extends Controller
         $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=th&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://mm777bet.com");
 
         $url = "{$this->hostGame}/gs2c/playGame.do?key={$urlValue}&stylename={$this->secureLogin}";
+        // return $url;
         return redirect($url);
     }
 
@@ -68,8 +68,7 @@ class PPGameController extends Controller
         } else {
             return [
                 "userId" => $user->username,
-                "currency" => $this->currencyCode,
-                // "cash" => $user->main_wallet,
+                "currency" => $user->currency,
                 "cash" => number_format((float) $user->main_wallet, 2, '.', ''),
                 "bonus" => 0,
                 "error" => 0,
@@ -93,7 +92,7 @@ class PPGameController extends Controller
         } else {
             return [
                 "userId" => $user->username,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "cash" => number_format((float) $user->main_wallet, 2, '.', ''),
                 "bonus" => 0,
                 "error" => 0,
@@ -191,7 +190,7 @@ class PPGameController extends Controller
                 "error" => 0,
                 "description" => "Success",
                 "transactionId" => $transactionId,
-                "currency" => $this->currencyCode,
+                "currency" => $userWallet->currency,
                 "cash" => number_format((float) $wallet_amount_after, 2, '.', ''),
                 "bonus" => 0,
                 "usedPromo" => 0,
@@ -365,7 +364,7 @@ class PPGameController extends Controller
                 "error" => 0,
                 "description" => "Success",
                 "transactionId" => $transactionId,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "cash" => number_format((float) $wallet_amount_after, 2, '.', ''),
                 "bonus" => 0,
             ];
@@ -425,7 +424,7 @@ class PPGameController extends Controller
             "error" => 0,
             "description" => "Success",
             "transactionId" => $transactionId,
-            "currency" => $this->currencyCode,
+            "currency" => $user->currency,
             "cash" => number_format((float) $main_wallet, 2, '.', ''),
             "bonus" => 0,
         ];
@@ -503,7 +502,7 @@ class PPGameController extends Controller
                 "error" => 0,
                 "description" => "Success",
                 "transactionId" => $transactionId,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "cash" => number_format((float) $wallet_amount_after, 2, '.', ''),
                 "bonus" => 0,
             ];
@@ -589,7 +588,7 @@ class PPGameController extends Controller
                 "error" => 0,
                 "description" => "Success",
                 "transactionId" => $transactionId,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "cash" => number_format((float) $wallet_amount_after, 2, '.', ''),
                 "bonus" => 0,
             ];

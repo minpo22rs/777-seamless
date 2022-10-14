@@ -8,7 +8,6 @@ use App\Models\User;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 use App\Classes\Payment;
@@ -29,10 +28,6 @@ class EvolutionGameController extends Controller
         Route::post('/evolution/debit', self::CONTROLLER_NAME . '@DebitRequest');
         Route::post('/evolution/credit', self::CONTROLLER_NAME . '@CreditRequest');
         Route::post('/evolution/cancel', self::CONTROLLER_NAME . '@CancelRequest');
-    }
-    public function index()
-    {
-        return 1234;
     }
 
     public function loginGame(Request $request, $username)
@@ -61,7 +56,7 @@ class EvolutionGameController extends Controller
                     "lastName" => $user->last_name,
                     "country" => "TH",
                     "language" => "TH",
-                    "currency" => "THB",
+                    "currency" => $user->currency,
                     "session" => [
                         "id" => Uuid::uuid4(),
                         "ip" => $request->ip()
@@ -329,7 +324,6 @@ class EvolutionGameController extends Controller
             }
             $wallet_amount_before = $userWallet->main_wallet;
             $wallet_amount_after = $userWallet->main_wallet;
-
 
             $check_transaction = EvolutionGame::select('id')
                 ->where('username', $username)

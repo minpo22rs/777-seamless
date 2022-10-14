@@ -11,6 +11,7 @@ use App\Http\Controllers\EvoplayController;
 use App\Http\Controllers\HuayDragonController;
 use App\Http\Controllers\SABAController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 /*
@@ -37,6 +38,8 @@ SBOController::routes();
 SABAController::routes();
 HuayDragonController::routes();
 
+$router->get('/launcher/joker', 'LauncherController@joker');
+
 $router->get('/pragmatic/launch/{userToken}/{gameId}', 'PPGameController@login');
 $router->get('/pragmatic', 'PPGameController@index');
 $router->post('/pragmatic/authenticate', 'PPGameController@auth');
@@ -50,6 +53,9 @@ $router->post('/pragmatic/promoWin', 'PPGameController@promoWin');
 
 $router->get('/awc/launch/{username}/{gameType}', 'SexyGameController@login');
 $router->post('/awc', 'SexyGameController@getBalance');
+
+$router->get('/awc/dev/launch/{username}/{gameType}', 'DevSexyGameController@login');
+$router->post('/awc/dev', 'SexyGameController@getBalance');
 
 $router->get('/jili', 'JiliGamController@index');
 $router->get('/jili/play/{userToken}', 'JiliGamController@login');
@@ -81,27 +87,53 @@ $router->post('/amb/void', 'AmbController@voidSettle');
 
 $account = [
     'deposit' => [
-        'deviceId' => '604a4f9c-5024-4af6-9035-4cca5f38f392',
-        'pin' => '252525',
-        'accountNo' => '1922431236',
-    ],
-    'withdraw' => [
-        'deviceId' => 'd9c1df03-d37f-4c82-ac94-8d0cf6b272fd',
+        'deviceId' => '86cc7cfd-01b6-4458-bfff-1c0e249bef7b',
         'pin' => '252525',
         'accountNo' => '1222391241',
     ],
-    // ใช้สำหรับอ่านชื่อบัญชี
+    'withdraw' => [
+        'deviceId' => 'f29f7a74-7c55-4476-a6e9-9ca8eadaab61',
+        'pin' => '222522',
+        'accountNo' => '1922431105',
+    ],
+    'test' => [
+        'deviceId' => 'e69f3401-5e93-4bc4-9de6-cd57712fcac9',
+        'pin' => '272727',
+        'accountNo' => '4351356988',
+    ],
     'another1' => [
-        'deviceId' => '604a4f9c-5024-4af6-9035-4cca5f38f392',
-        'pin' => '252525',
-        'accountNo' => '1922431236',
+        'deviceId' => 'f29f7a74-7c55-4476-a6e9-9ca8eadaab61',
+        'pin' => '221689',
+        'accountNo' => '1922315587',
     ],
 ];
+
+// $account = [
+//     'deposit' => [
+//         'deviceId' => '0391778a-32ee-4029-8d6e-df6a6bfd62c5',
+//         'pin' => '252525',
+//         'accountNo' => '1922431236',
+//     ],
+//     'withdraw' => [
+//         'deviceId' => '86cc7cfd-01b6-4458-bfff-1c0e249bef7b',
+//         'pin' => '252525',
+//         'accountNo' => '1222391241',
+//     ],
+//     'test' => [
+//         'deviceId' => 'e69f3401-5e93-4bc4-9de6-cd57712fcac9',
+//         'pin' => '272727',
+//         'accountNo' => '4351356988',
+//     ],
+//     'another1' => [
+//         'deviceId' => 'D3C9DE95-3348-4C18-A9F4-60014148E3A1',
+//         'pin' => '159691',
+//         'accountNo' => '4190351844',
+//     ],
+// ];
 
 $bankSecretKey = env('BANK_SECRET_KEY', '');
 
 $router->get('/secret/bank/scb/verify-account', function (Request $request) use ($bankSecretKey, $account) {
-    // สำหรับดึงรายการฝาก
     if ($request->secretKey != $bankSecretKey) {
         return ['message' => 'Your secret key is not valid'];
     }
@@ -117,7 +149,6 @@ $router->get('/secret/bank/scb/verify-account', function (Request $request) use 
 });
 
 $router->get('/secret/bank/scb', function (Request $request) use ($bankSecretKey, $account) {
-    // สำหรับดึงรายการฝาก
     if ($request->secretKey != $bankSecretKey) {
         return ['message' => 'Your secret key is not valid'];
     }
@@ -130,7 +161,6 @@ $router->get('/secret/bank/scb', function (Request $request) use ($bankSecretKey
 });
 
 $router->post('/secret/bank/scb', function (Request $request) use ($bankSecretKey, $account) {
-    // สำหรับถอนเงิน
     if ($request->secretKey != $bankSecretKey) {
         return ['message' => 'Your secret key is not valid'];
     }
@@ -140,5 +170,4 @@ $router->post('/secret/bank/scb', function (Request $request) use ($bankSecretKe
     if ($scb->login()) {
         return json_encode($scb->transfer($request->bank, $request->accountNumber, $request->amount));
     }
-    
 });

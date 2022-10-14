@@ -11,7 +11,7 @@ class SCBEasyAPI
 
     public $availableBalance = 0;
     private $apiUrl = 'https://fasteasy.scbeasy.com:8443';
-    private $scbVersion = '3.54.0/5742';
+    private $scbVersion = '3.59.0/6231';
     private $deviceId = '';
     private $accountNumber = '';
     private $pin = '';
@@ -31,7 +31,7 @@ class SCBEasyAPI
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.54.0/5742");
+        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.59.0/6231");
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -57,7 +57,7 @@ class SCBEasyAPI
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.54.0/5742");
+        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.59.0/6231");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
@@ -96,16 +96,18 @@ class SCBEasyAPI
             $headers = array(
                 'Accept-Language: th',
                 'scb-channel: APP',
-                'User-Agent: Android/10;FastEasy/' . $this->scbVersion,
+                'User-Agent: Android/11;FastEasy/' . $this->scbVersion,
                 'Content-Type: application/json; charset=UTF-8',
                 'Connection: close'
             );
             $data = json_encode(['deviceId'  => $this->deviceId, 'jailbreak' => 0, 'tilesVersion'  => 39, 'userMode'  => 'INDIVIDUAL']);
             $res = $this->CurlForAuth('POST', $url, $headers, $data);
             preg_match_all('/(?<=Api-Auth: ).+/', $res, $Auth);
+            if (!isset($Auth[0][0])) {
+                throw new Exception('ไม่สามารถเข้าใช้งานได้');
+            }
             $Auth = $Auth[0][0];
             if ($Auth == "") {
-                // echo "SCB - AUTH : ".json_encode($res);
                 return false;
             }
 
@@ -125,7 +127,7 @@ class SCBEasyAPI
             $pubKey = $data['e2ee']['pseudoPubKey'];
 
             // ------------------- encrypt pin ------------------------------
-            $url = 'http://api.scb-easy.com:3000/pin/encrypt';
+            $url = 'http://localhost:7777/pin/encrypt';
             $headers = array(
                 "Content-Type: application/x-www-form-urlencoded"
             );
@@ -186,7 +188,7 @@ class SCBEasyAPI
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
         // $headers[] = 'User-Agent: Android/11;FastEasy/3.35.0/3906';
-        $headers[] = 'User-Agent: Android/10;FastEasy/3.38.0/4219';
+        $headers[] = 'User-Agent: Android/11;FastEasy/3.59.0/6231';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -227,7 +229,7 @@ class SCBEasyAPI
 
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/10;FastEasy/3.38.0/4219';
+        $headers[] = 'User-Agent: Android/11;FastEasy/3.59.0/6231';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json; charset=UTF-8';
         // $headers[] = 'Content-Type: application/json';
@@ -320,7 +322,7 @@ class SCBEasyAPI
         $transferType = ($bank == 'SCB') ? '3RD' : (($bank == '014') ? '3RD' : 'ORFT');
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/10;FastEasy/3.38.0/4219';
+        $headers[] = 'User-Agent: Android/10;FastEasy/3.59.0/6231';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -372,7 +374,7 @@ class SCBEasyAPI
         $transferType = $bank == 'SCB' ? '3RD' : 'ORFT';
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/11;FastEasy/3.35.0/3906';
+        $headers[] = 'User-Agent: Android/11;FastEasy/3.59.0/6231';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -452,7 +454,7 @@ class SCBEasyAPI
         $transferType = ($bank == 'SCB') ? '3RD' : (($bank == '014') ? '3RD' : 'ORFT');
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/10;FastEasy/3.38.0/4219';
+        $headers[] = 'User-Agent: Android/10;FastEasy/3.59.0/6231';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);

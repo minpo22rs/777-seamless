@@ -17,7 +17,6 @@ class SexyGameController extends Controller
     private $host = "https://api.onlinegames22.com";
     private $certCode = "AdydwGKtz7dYi4kCHse";
     private $agentId = "777bet";
-    private $currencyCode = "THB";
     private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
 
@@ -29,6 +28,18 @@ class SexyGameController extends Controller
     public function login($username, $gameType)
     {
         $form_params = [];
+
+        $user = User::where('username', $username)->first();
+        if (empty($user)) {
+            $response = ["message" => 'Oops! The user does not exist'];
+            return response($response, 401);
+            exit();
+        }
+
+        if ($user->currency == 'MMK') {
+            $this->language = 'en';
+        }
+
         $method = 'login';
         if ($gameType == 'sexy') {
             $method = 'doLoginAndLaunchGame';
@@ -70,22 +81,12 @@ class SexyGameController extends Controller
             ];
         }
 
-        $user = User::where('username', $username)->first();
-        if (empty($user)) {
-            $response = ["message" => 'Oops! The user does not exist'];
-            return response($response, 401);
-            exit();
-        }
-
         try {
             #return ['url' =>  $this->host . '/wallet/' . $method, 'form_params' => $form_params]; 
             $client = new Client();
             $res = $client->request('POST', $this->host . '/wallet/' . $method, [
                 'form_params' => $form_params
             ]);
-            // echo $res->getStatusCode();
-            // echo $res->getHeader('content-type')[0];
-            // return $res->getBody();
             $response = $res->getBody();
             // return $response;
             if ($response) {
@@ -94,9 +95,9 @@ class SexyGameController extends Controller
                     return redirect($json->url);
                 } else if ($json->status == '1028') {
                     //1028 = Unable to proceed. please try again later
-                    return $this->login($username, $gameType);
+                    $this->login($username, $gameType);
                 } else if ($json->status == '1002') {
-                    $responsenewmember = $this->createMember($username);
+                    $responsenewmember = $this->createMember($username, $user->currency);
                     if (!$responsenewmember) {
                         return "error create member";
                     } else if ($responsenewmember->status == '0000') {
@@ -115,18 +116,23 @@ class SexyGameController extends Controller
         }
     }
 
-    private function createMember($username)
+    private function createMember($username, $currency)
     {
         try {
+            $betLimit = $this->betLimit;
+            if ($currency == 'MMK') {
+                $this->language = 'en';
+                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[262501,262502,262503,262504,262505,262506]}}}';
+            }
             $client = new Client();
             $res = $client->request('POST', $this->host . '/wallet/createMember', [
                 'form_params' => [
                     'cert' =>  $this->certCode,
                     'agentId' =>  $this->agentId,
                     'userId' =>  $username,
-                    'currency' =>  $this->currencyCode,
+                    'currency' =>  $currency,
                     'language' =>  $this->language,
-                    'betLimit' =>  $this->betLimit,
+                    'betLimit' =>  $betLimit,
                 ]
             ]);
             $response = $res->getBody()->getContents();
@@ -172,8 +178,6 @@ class SexyGameController extends Controller
                     } else {
                         throw new \Exception('Invalid user Id', 1000);
                     }
-
-
                     return [
                         "userId" => $username,
                         "balance" => $main_wallet,
@@ -484,7 +488,7 @@ class SexyGameController extends Controller
                         if ($wallet) {
                             // $beforeCredit = $wallet->main_wallet;
                             $sexy = SexyGame::where('platformTxId', $trxId)->where('action', 'settle')->first();
-                            if($sexy) {
+                            if ($sexy) {
                                 // throw new \Exception('Invalid Transaction Id', 1000);
                                 $oldWinAmount = $sexy->winAmount;
                                 Log::debug("SEXY=$trxId, oldWinAmount=$oldWinAmount");

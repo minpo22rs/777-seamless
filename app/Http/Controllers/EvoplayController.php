@@ -19,7 +19,6 @@ class EvoplayController extends Controller
     private $SYSTEM_ID = "7720";
     private $VERSION = 1;
     private $SYSTEM_KEY = "3eb6347e2eab667d9ed27056aec92444";
-    private $CURRENCY = "THB";
     private $HOST = "https://api.8provider.com";
 
 
@@ -105,7 +104,7 @@ class EvoplayController extends Controller
                 "cash_url" => 'https://mm777bet.com'
             ],
             "denomination" => 1,
-            "currency" => $this->CURRENCY,
+            "currency" => $user->currency,
             "return_url_info" => 1,
             "callback_version" => 2,
         ];
@@ -193,7 +192,7 @@ class EvoplayController extends Controller
                     "status" => "ok",
                     "data" => [
                         "balance" => number_format((float) $wallet_amount_after, 2, '.', ''),
-                        "currency" => $this->CURRENCY
+                        "currency" => $member->currency
                     ]
                 ];
                 break;
@@ -250,7 +249,7 @@ class EvoplayController extends Controller
                         "status" => "ok",
                         "data" => [
                             "balance" => number_format((float) $wallet_amount_after, 2, '.', ''),
-                            "currency" => $this->CURRENCY
+                            "currency" => $member->currency
                         ]
                     ];
                 } catch (\Exception $e) {
@@ -313,7 +312,7 @@ class EvoplayController extends Controller
                         "status" => "ok",
                         "data" => [
                             "balance" => number_format((float) $wallet_amount_after, 2, '.', ''),
-                            "currency" => $this->CURRENCY
+                            "currency" => $member->currency
                         ]
                     ];
                 } catch (\Exception $e) {
@@ -361,7 +360,7 @@ class EvoplayController extends Controller
                         "status" => "ok",
                         "data" => [
                             "balance" => number_format((float) $wallet_amount_after, 2, '.', ''),
-                            "currency" => $this->CURRENCY
+                            "currency" => $member->currency
                         ]
                     ];
                 } catch (\Exception $e) {

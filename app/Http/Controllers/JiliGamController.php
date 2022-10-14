@@ -18,7 +18,6 @@ class JiliGamController extends Controller
     private $host = "https://wb-api.jlfafafa2.com";
     private $agentId = "ZF094_ 777bet";
     private $agentKey = "0cb55ba8492209aaa5ca4dffe7d9b9741f46450b";
-    private $currencyCode = "THB";
     private $gameLang = "en-US";
     private $PREFIX = '77B';
 
@@ -126,7 +125,7 @@ class JiliGamController extends Controller
             "errorCode" => 0,
             "message" => "success",
             "username" => $this->PREFIX . $user->username,
-            "currency" => $this->currencyCode,
+            "currency" => $user->currency,
             "balance" => $user->main_wallet,
             "token" => $user->token,
         ];
@@ -196,7 +195,7 @@ class JiliGamController extends Controller
                 "errorCode" => 0,
                 "message" => "success",
                 "username" => $username,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "balance" => $wallet_amount_after,
             ];
         } catch (\Exception $e) {
@@ -205,7 +204,7 @@ class JiliGamController extends Controller
                 "errorCode" => $e->getCode(),
                 "message" => $e->getMessage(),
                 "username" => $username,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "balance" => $main_wallet,
             ];
         }
@@ -268,7 +267,7 @@ class JiliGamController extends Controller
                 "errorCode" => 0,
                 "message" => "success",
                 "username" => $username,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "balance" => $wallet_amount_after,
             ];
         } catch (\Exception $e) {
@@ -277,7 +276,7 @@ class JiliGamController extends Controller
                 "errorCode" => $e->getCode(),
                 "message" => $e->getMessage(),
                 "username" => $username,
-                "currency" => $this->currencyCode,
+                "currency" => $user->currency,
                 "balance" => $main_wallet,
             ];
         }
