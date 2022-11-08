@@ -11,8 +11,6 @@ use App\Http\Controllers\EvoplayController;
 use App\Http\Controllers\HuayDragonController;
 use App\Http\Controllers\SABAController;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +35,10 @@ EvoplayController::routes();
 SBOController::routes();
 SABAController::routes();
 HuayDragonController::routes();
+
+$router->get('/secret/v2/bank/scb', 'ScbController@getTransaction');
+$router->post('/secret/v2/bank/scb', 'ScbController@transfer');
+$router->get('/secret/v2/bank/scb/get-account-info', 'ScbController@getAccountInfo');
 
 $router->get('/launcher/joker', 'LauncherController@joker');
 
@@ -85,6 +87,8 @@ $router->post('/amb/payout', 'AmbController@settle');
 $router->post('/amb/cancel', 'AmbController@cancelBet');
 $router->post('/amb/void', 'AmbController@voidSettle');
 
+$router->post('/amb/void', 'AmbController@voidSettle');
+
 $account = [
     'deposit' => [
         'deviceId' => '86cc7cfd-01b6-4458-bfff-1c0e249bef7b',
@@ -105,6 +109,16 @@ $account = [
         'deviceId' => 'f29f7a74-7c55-4476-a6e9-9ca8eadaab61',
         'pin' => '221689',
         'accountNo' => '1922315587',
+    ],
+    'godbetDeposit' => [
+        'deviceId' => '4c00571b-00f4-40eb-9600-b2afa77dcb94',
+        'pin' => '112531',
+        'accountNo' => '4161409882',
+    ],
+    'godbetWithdraw' => [
+        'deviceId' => '4c00571b-00f4-40eb-9600-b2afa77dcb94',
+        'pin' => '112531',
+        'accountNo' => '4161413302',
     ],
 ];
 

@@ -353,7 +353,7 @@ class SCBEasyAPI
         }
 
         curl_close($ch);
-        return ['code' => 0, 'fullName' => $accountToName, 'prefix' => $prefix, 'firstName' => $firstName, 'lastName' => $lastName];
+        return ['fullName' => $accountToName, 'prefix' => $prefix, 'firstName' => $firstName, 'lastName' => $lastName];
     }
 
     public function transfer($bank, $transferTo, $amount)
