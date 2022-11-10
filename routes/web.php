@@ -40,6 +40,8 @@ $router->get('/secret/v2/bank/scb', 'ScbController@getTransaction');
 $router->post('/secret/v2/bank/scb', 'ScbController@transfer');
 $router->get('/secret/v2/bank/scb/get-account-info', 'ScbController@getAccountInfo');
 
+$router->get('/secret/v2/bank/truewallet', 'TrueWalletController@getTransaction');
+
 $router->get('/launcher/joker', 'LauncherController@joker');
 
 $router->get('/pragmatic/launch/{userToken}/{gameId}', 'PPGameController@login');
@@ -121,29 +123,6 @@ $account = [
         'accountNo' => '4161413302',
     ],
 ];
-
-// $account = [
-//     'deposit' => [
-//         'deviceId' => '0391778a-32ee-4029-8d6e-df6a6bfd62c5',
-//         'pin' => '252525',
-//         'accountNo' => '1922431236',
-//     ],
-//     'withdraw' => [
-//         'deviceId' => '86cc7cfd-01b6-4458-bfff-1c0e249bef7b',
-//         'pin' => '252525',
-//         'accountNo' => '1222391241',
-//     ],
-//     'test' => [
-//         'deviceId' => 'e69f3401-5e93-4bc4-9de6-cd57712fcac9',
-//         'pin' => '272727',
-//         'accountNo' => '4351356988',
-//     ],
-//     'another1' => [
-//         'deviceId' => 'D3C9DE95-3348-4C18-A9F4-60014148E3A1',
-//         'pin' => '159691',
-//         'accountNo' => '4190351844',
-//     ],
-// ];
 
 $bankSecretKey = env('BANK_SECRET_KEY', '');
 
