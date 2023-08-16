@@ -18,7 +18,7 @@ class JiliGamController extends Controller
     private $host = "https://wb-api.jlfafafa2.com";
     private $agentId = "ZF094_ 777bet";
     private $agentKey = "0cb55ba8492209aaa5ca4dffe7d9b9741f46450b";
-    private $gameLang = "en-US";
+    private $gameLang = "th-TH";
     private $PREFIX = '77B';
 
     private function encryptBody($queryString)
@@ -69,6 +69,11 @@ class JiliGamController extends Controller
             exit();
         }
         $userToken = $user->token;
+        $currency = $user->currency;
+        if ($currency != 'THB') {
+            $this->gameLang = 'en-US';
+        }
+        // $userToken = $user->current;
 
         $queryString = "Token={$userToken}&GameId={$gameId}&Lang={$this->gameLang}&AgentId={$this->agentId}";
         $key = $this->encryptBody($queryString);
@@ -104,7 +109,7 @@ class JiliGamController extends Controller
 
     public function auth(Request $request)
     {
-        Log::debug($request);
+        // Log::debug($request);
         $reqId = $request->reqId;
         $userToken = $request->token;
         if (empty($reqId) || empty($userToken)) {
@@ -133,8 +138,8 @@ class JiliGamController extends Controller
 
     public function bet(Request $request)
     {
-        Log::info("JILI bet==================>");
-        Log::debug($request);
+        // Log::info("JILI bet==================>");
+        // Log::debug($request);
 
         $reqId = $request->reqId;
         $token = $request->token;
@@ -153,6 +158,10 @@ class JiliGamController extends Controller
 
         DB::beginTransaction();
         try {
+            // ** ถ้ามีการวางเดิมพันมากกว่า 150 ไม่ให้วางเดิมพัน
+            // if ($betAmount > 150) {
+            //     throw new \Exception('Not Enough Balance', 1018);
+            // }
             $userWallet = User::where('username', $username)->lockForUpdate()->first();
             $wallet_amount_before = $userWallet->main_wallet;
             $wallet_amount_after = $userWallet->main_wallet;
@@ -176,6 +185,19 @@ class JiliGamController extends Controller
                     throw new \Exception('Already accepted', 1);
                 }
             }
+
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Jili',
+                'game_id' => $request->game,
+                'game_name' => 'Unknown',
+                'game_type' => 'Slot',
+                'win' => $request->winloseAmount,
+                'loss' => $request->betAmount,
+            ]);
 
             (new Payment())->payAll($userWallet->id, $betAmount, 'SLOT');
             (new Payment())->saveLog([
@@ -211,8 +233,12 @@ class JiliGamController extends Controller
     }
     public function cancelBet(Request $request)
     {
-        Log::info("JILI cancelBet==================>");
-        Log::debug($request);
+        // Log::info("JILI cancelBet==================>");
+        return [
+            "errorCode" => 5,
+            "message" => "Fail (System Error)"
+        ];
+        // Log::debug($request);
 
         $reqId = $request->reqId;
         $token = $request->token;
@@ -250,6 +276,18 @@ class JiliGamController extends Controller
                 }
             }
 
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Jili',
+                'game_id' => $request->game,
+                'game_name' => 'Unknown',
+                'game_type' => 'Slot',
+                'cancel' => $betAmount,
+            ]);
+
             (new Payment())->saveLog([
                 'amount' => $request->betAmount,
                 'before_balance' => $wallet_amount_before,
@@ -284,14 +322,14 @@ class JiliGamController extends Controller
 
     public function sessionBet(Request $request)
     {
-        Log::info("JILI sessionBet==================>");
-        Log::debug($request);
+        // Log::info("JILI sessionBet==================>");
+        // Log::debug($request);
     }
 
     public function cancelSessionBet(Request $request)
     {
-        Log::info("JILI cancelSessionBet==================>");
-        Log::debug($request);
+        // Log::info("JILI cancelSessionBet==================>");
+        // Log::debug($request);
     }
 
 

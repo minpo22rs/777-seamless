@@ -762,6 +762,18 @@ class SBOController extends Controller
                     $trx->status = 'settled';
                     $trx->save();
 
+                    Payment::updatePlayerWinLossReport([
+                        'report_type' => 'Hourly',
+                        'player_id' => $player->id,
+                        'partner_id' => $player->partner_id,
+                        'provider_id' => 1,
+                        'provider_name' => 'SBO',
+                        'game_id' => 'SBO',
+                        'game_name' => 'Unknown',
+                        'game_type' => 'Sport',
+                        'win' => $winloss,
+                    ]);
+
                     (new Payment())->saveLog([
                         'amount' => $winloss,
                         'before_balance' => $before_balance,
@@ -829,6 +841,18 @@ class SBOController extends Controller
                     $trx->txns_3rd_party = $Txns3RdParty;
                     $trx->status = 'settled';
                     $trx->save();
+
+                    Payment::updatePlayerWinLossReport([
+                        'report_type' => 'Hourly',
+                        'player_id' => $player->id,
+                        'partner_id' => $player->partner_id,
+                        'provider_id' => 1,
+                        'provider_name' => 'SBO',
+                        'game_id' => 'SBO',
+                        'game_name' => 'Unknown',
+                        'game_type' => 'Sport',
+                        'win' => $winloss,
+                    ]);
 
                     (new Payment())->saveLog([
                         'amount' => $winloss,
@@ -965,6 +989,18 @@ class SBOController extends Controller
                     ];
                 }
             }
+
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $player->id,
+                'partner_id' => $player->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'SBO',
+                'game_id' => 'SBO',
+                'game_name' => 'Unknown',
+                'game_type' => 'Sport',
+                'loss' => $amount,
+            ]);
 
             (new Payment())->saveLog([
                 'amount' => $amount,

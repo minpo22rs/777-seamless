@@ -12,38 +12,20 @@ use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class SexyGameController extends Controller
+class DevSexyGameController extends Controller
 {
-    private $host = "https://api.onlinegames22.com";
-    private $certCode = "AdydwGKtz7dYi4kCHse";
-    private $agentId = "777bet";
+    private $host = "https://tttint.onlinegames22.com";
+    private $certCode = "heVfNAYIoldStY4TSw5";
+    private $agentId = "cullinan";
+    private $currencyCode = "MMK";
     private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
-
-    public function hello()
-    {
-        return response()->json(['message' => 'We are ready']);
-    }
 
     public function login($username, $gameType)
     {
         $form_params = [];
-
-        $user = User::where('username', $username)->first();
-        if (empty($user)) {
-            $response = ["message" => 'Oops! The user does not exist'];
-            return response($response, 401);
-            exit();
-        }
-
-        // return $user;
-
-        if ($user->currency == 'MMK') {
-            $this->language = 'en';
-        }
-
         $method = 'login';
-        if ($gameType == 'SEXYBCRT') {
+        if ($gameType == 'sexy') {
             $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'cert' =>  $this->certCode,
@@ -83,23 +65,27 @@ class SexyGameController extends Controller
             ];
         }
 
+        $user = User::where('username', $username)->first();
+        if (empty($user)) {
+            $response = ["message" => 'Oops! The user does not exist'];
+            return response($response, 401);
+            exit();
+        }
+
         try {
-            #return ['url' =>  $this->host . '/wallet/' . $method, 'form_params' => $form_params]; 
             $client = new Client();
             $res = $client->request('POST', $this->host . '/wallet/' . $method, [
                 'form_params' => $form_params
             ]);
             $response = $res->getBody();
-
             if ($response) {
                 $json = json_decode($response);
                 if ($json->status == '0000') {
                     return redirect($json->url);
                 } else if ($json->status == '1028') {
-                    //1028 = Unable to proceed. please try again later
-                    $this->login($username, $gameType);
+                    return $this->login($username, $gameType);
                 } else if ($json->status == '1002') {
-                    $responsenewmember = $this->createMember($username, $user->currency);
+                    return $responsenewmember = $this->createMember($username);
                     if (!$responsenewmember) {
                         return "error create member";
                     } else if ($responsenewmember->status == '0000') {
@@ -118,24 +104,25 @@ class SexyGameController extends Controller
         }
     }
 
-    private function createMember($username, $currency)
+    private function createMember($username)
     {
         try {
             $betLimit = $this->betLimit;
-            if ($currency == 'MMK') {
-                $this->language = 'en';
+            if ($this->currencyCode == 'MMK') {
                 $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[262501,262502,262503,262504,262505,262506]}}}';
             }
             $client = new Client();
-            $res = $client->request('POST', $this->host . '/wallet/createMember', [
-                'form_params' => [
-                    'cert' =>  $this->certCode,
-                    'agentId' =>  $this->agentId,
-                    'userId' =>  $username,
-                    'currency' =>  $currency,
-                    'language' =>  $this->language,
-                    'betLimit' =>  $betLimit,
-                ]
+            $url = $this->host . '/wallet/createMember';
+            $form_params = [
+                'cert' =>  $this->certCode,
+                'agentId' =>  $this->agentId,
+                'userId' =>  $username,
+                'currency' =>  $this->currencyCode,
+                'language' =>  $this->language,
+                'betLimit' =>  $betLimit,
+            ];
+            $res = $client->request('POST', $url, [
+                'form_params' => $form_params
             ]);
             $response = $res->getBody()->getContents();
             if ($response) {
@@ -164,10 +151,10 @@ class SexyGameController extends Controller
 
     public function getBalance(Request $request)
     {
+
         $message = json_decode($request->message, true);
         $wallet_amount_after = 0;
         $action = $message['action'];
-        Log::debug("AWC - Logger [SexyGameController]");
         if ($action != "getBalance") {
             Log::debug($request);
         }
@@ -189,7 +176,7 @@ class SexyGameController extends Controller
                     ];
                 } catch (\Exception $e) {
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -199,25 +186,9 @@ class SexyGameController extends Controller
                 try {
                     foreach ($message['txns'] as $element) {
                         $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        $currency = $userWallet->currency;
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
-
-                            // ** ถ้าหาก BET PERMISSION == SLOT
-                            if ($userWallet->bet_permission == 'SLOT') {
-                                throw new \Exception('Unable to bet while promotion is slot', 1018);
-                            }
-
-                            // if ($userWallet->phone_number == '0899655223') {
-                            //     if ($element["betAmount"] > 10000) {
-                            //         throw new \Exception('You can bet up to 2000', 1018);
-                            //     }
-                            // } else {
-                            //     if ($element["betAmount"] > 1000) {
-                            //         throw new \Exception('You can bet up to 2000', 1018);
-                            //     }
-                            // }
 
                             $betTransaction = $this->checkTransactionHistory('bet', $element);
                             if (!$betTransaction) {
@@ -233,19 +204,7 @@ class SexyGameController extends Controller
 
                                     (new Payment())->payAll($userWallet->id, $element['betAmount'], 'CASINO');
                                     $payload = $element;
-                                    Payment::updatePlayerWinLossReport([
-                                        'report_type' => 'Hourly',
-                                        'player_id' => $userWallet->id,
-                                        'partner_id' => $userWallet->partner_id,
-                                        'provider_id' => 1,
-                                        'provider_name' => $payload['platform'],
-                                        'game_id' => $payload['gameCode'],
-                                        'game_name' => $payload['gameName'],
-                                        'game_type' => $payload["gameType"],
-                                        'loss' => $payload['betAmount'],
-                                    ]);
                                     (new Payment())->saveLog([
-                                        'currency' => $currency,
                                         'amount' => $payload['betAmount'],
                                         'before_balance' => $wallet_amount_before,
                                         'after_balance' => $wallet_amount_before - $payload['betAmount'],
@@ -257,7 +216,7 @@ class SexyGameController extends Controller
                                         'player_username' => $payload['userId'],
                                     ]);
 
-                                    if (!$this->savaTransaction($currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
 
@@ -285,12 +244,12 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => (string)$e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
                 break;
-            case "cancelBet":;
+            case "cancelBet":; // *!!!!!!!!!!333333333333333333333333333333333333333333
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
@@ -308,20 +267,21 @@ class SexyGameController extends Controller
                                     User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
+
                                     Log::info([
-                                        'currency' => $userWallet->currency,
                                         'action' => $action,
                                         'wallet_amount_before' => $wallet_amount_before,
                                         'wallet_amount_after' => $wallet_amount_after,
+
                                         'element' => $element,
                                         'message' => $message,
                                     ]);
-                                    if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
                                 }
                             } else {
-                                if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                     throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
@@ -338,7 +298,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -363,7 +323,7 @@ class SexyGameController extends Controller
                                             'main_wallet' => $wallet_amount_after
                                         ]);
 
-                                        if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                        if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                             throw new \Exception('Fail (System Error)', 9999);
                                         }
                                     }
@@ -380,7 +340,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -404,7 +364,7 @@ class SexyGameController extends Controller
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
-                                    if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
                                 }
@@ -420,7 +380,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -441,7 +401,7 @@ class SexyGameController extends Controller
                     ];
                 } catch (\Exception $e) {
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -472,20 +432,7 @@ class SexyGameController extends Controller
 
                                 $payload = $element;
                                 $winloss = !empty($payload["winAmount"]) ? $payload["winAmount"] : 0;
-
-                                Payment::updatePlayerWinLossReport([
-                                    'report_type' => 'Hourly',
-                                    'player_id' => $userWallet->id,
-                                    'partner_id' => $userWallet->partner_id,
-                                    'provider_id' => 1,
-                                    'provider_name' => $payload['platform'],
-                                    'game_id' => $payload['gameCode'],
-                                    'game_name' => $payload['gameName'],
-                                    'game_type' => $payload["gameType"],
-                                    'win' => $winloss,
-                                ]);
                                 (new Payment())->saveLog([
-                                    'currency' => $userWallet->currency,
                                     'amount' => $winloss,
                                     'before_balance' => $wallet_amount_before,
                                     'after_balance' => $wallet_amount_before + $winloss,
@@ -502,8 +449,13 @@ class SexyGameController extends Controller
                                     // "userWallet" => $userWallet,
                                     "wallet_amount_before" => $wallet_amount_before,
                                     "wallet_amount_after" => $wallet_amount_after,
+                                    "main_wallet"=>  $userWallet->main_wallet,
+                                    "winAmount"=> $element["winAmount"],
+                                    "betAmount"=> $element["betAmount"]
+
+
                                 ]);
-                                if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                     throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
@@ -518,48 +470,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
-                        "desc" => $e->getMessage()
-                    ];
-                }
-                break;
-            case "resettle":;
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $trxId = $element['platformTxId'];
-                        Log::debug("SEXY=$trxId");
-                        $wallet = User::where('username', $element['userId'])->lockForUpdate()->first();
-                        if ($wallet) {
-                            // $beforeCredit = $wallet->main_wallet;
-                            $sexy = SexyGame::where('platformTxId', $trxId)->where('action', 'settle')->first();
-                            if ($sexy) {
-                                // throw new \Exception('Invalid Transaction Id', 1000);
-                                $oldWinAmount = $sexy->winAmount;
-                                Log::debug("SEXY=$trxId, oldWinAmount=$oldWinAmount");
-                                $newWinAmount = $element['winAmount'];
-                                Log::debug("SEXY=$trxId, newWinAmount=$newWinAmount");
-                                $changeBalance = $wallet->main_wallet + $newWinAmount - $oldWinAmount;
-                                Log::debug("SEXY=$trxId, changeBalance=$changeBalance");
-                                $wallet->main_wallet = $changeBalance;
-                                $wallet->save();
-                                $sexy->action = 'resettle';
-                                $sexy->save();
-                                // $wallet->decrement('main_wallet', $oldWinAmount);
-                                // $wallet->increment('main_wallet', $newWinAmount);
-                            }
-                        } else {
-                            // throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000"
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -592,7 +503,7 @@ class SexyGameController extends Controller
                                             'main_wallet' => $wallet_amount_after
                                         ]);
 
-                                        if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                        if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                             throw new \Exception('Fail (System Error)', 9999);
                                         }
                                     }
@@ -611,7 +522,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -644,7 +555,7 @@ class SexyGameController extends Controller
                                             'main_wallet' => $wallet_amount_after
                                         ]);
 
-                                        if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                        if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                             throw new \Exception('Fail (System Error)', 9999);
                                         }
                                     }
@@ -663,7 +574,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -695,7 +606,7 @@ class SexyGameController extends Controller
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
-                                    if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
                                 }
@@ -711,12 +622,12 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
                 break;
-            case "betNSettle":;
+            case "betNSettle":; // *!!!!!!!!!!44444444444444444444444444444444444
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
@@ -739,7 +650,7 @@ class SexyGameController extends Controller
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
-                                    if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
                                 }
@@ -757,12 +668,12 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => (string)$e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
                 break;
-            case "cancelBetNSettle":;
+            case "cancelBetNSettle":; // *!!!!!!!!!!5555555555555555555555555555555555
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
@@ -781,12 +692,12 @@ class SexyGameController extends Controller
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
-                                    if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
                                 }
                             } else {
-                                if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                     throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
@@ -803,7 +714,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -830,7 +741,7 @@ class SexyGameController extends Controller
                                     'main_wallet' => $wallet_amount_after
                                 ]);
 
-                                if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                     throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
@@ -848,7 +759,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -859,11 +770,13 @@ class SexyGameController extends Controller
                     foreach ($message['txns'] as $element) {
                         $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-                            if ($wallet_amount_before < $element["tip"]) {
+
+                            if ($userWallet->main_wallet <= 0) {
                                 throw new \Exception('Not Enough Balance', 1018);
                             }
+
+                            $wallet_amount_before = $userWallet->main_wallet;
+                            $wallet_amount_after = $userWallet->main_wallet;
 
                             $tip = $this->checkTransactionHistory('tip', $element);
                             if (!$tip) {
@@ -875,7 +788,7 @@ class SexyGameController extends Controller
                                     'main_wallet' => $wallet_amount_after
                                 ]);
 
-                                if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                     throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
@@ -893,7 +806,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => (string)$e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -917,12 +830,12 @@ class SexyGameController extends Controller
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
-                                    if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                    if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
                                 }
                             } else {
-                                if (!$this->savaTransaction($userWallet->currency, $wallet_amount_before, $wallet_amount_after, $element, $message)) {
+                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                     throw new \Exception('Fail (System Error)', 9999);
                                 }
                             }
@@ -940,7 +853,7 @@ class SexyGameController extends Controller
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => $e->getCode(),
+                        "status" => "" . $e->getCode(),
                         "desc" => $e->getMessage()
                     ];
                 }
@@ -977,7 +890,7 @@ class SexyGameController extends Controller
         return $sexyGame;
     }
 
-    private function savaTransaction($currency, $wallet_amount_before, $wallet_amount_after, $payload, $body)
+    private function savaTransaction($wallet_amount_before, $wallet_amount_after, $payload, $body)
     {
         $betAmount = 0;
         if (!empty($payload["betAmount"])) {
@@ -989,7 +902,6 @@ class SexyGameController extends Controller
         $platformTxId = !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"];
         try {
             $sexyGame = new SexyGame();
-            $sexyGame->currency = $currency;
             $sexyGame->username = $payload["userId"];
             $sexyGame->action = $body["action"];
             $sexyGame->wallet_amount_before = $wallet_amount_before;

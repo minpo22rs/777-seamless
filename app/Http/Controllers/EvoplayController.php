@@ -9,9 +9,7 @@ use App\Models\User;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Ramsey\Uuid\Uuid;
 
 class EvoplayController extends Controller
 {
@@ -229,6 +227,18 @@ class EvoplayController extends Controller
                         }
                     }
 
+                    Payment::updatePlayerWinLossReport([
+                        'report_type' => 'Hourly',
+                        'player_id' => $member->id,
+                        'partner_id' => $member->partner_id,
+                        'provider_id' => 1,
+                        'provider_name' => 'EvoPlay',
+                        'game_id' => $game_id,
+                        'game_name' => 'Unknown',
+                        'game_type' => 'Slot',
+                        'loss' => $req_data["amount"],
+                    ]);
+
                     (new Payment())->payAll($member->id, $req_data["amount"], 'SLOT');
                     (new Payment())->saveLog([
                         'amount' => $req_data["amount"],
@@ -294,6 +304,18 @@ class EvoplayController extends Controller
                         throw new \Exception('WIN_ALREADY_EXIST', 500);
                     }
                     // }
+
+                    Payment::updatePlayerWinLossReport([
+                        'report_type' => 'Hourly',
+                        'player_id' => $member->id,
+                        'partner_id' => $member->partner_id,
+                        'provider_id' => 1,
+                        'provider_name' => 'EvoPlay',
+                        'game_id' => $game_id,
+                        'game_name' => 'Unknown',
+                        'game_type' => 'Slot',
+                        'win' => $req_data["amount"],
+                    ]);
 
                     (new Payment())->saveLog([
                         'amount' => $req_data["amount"],

@@ -40,9 +40,10 @@ class DreamGamingController extends Controller
         $ticket_id = $payload['data'];
         $token = $payload['token'];
         $username = $payload['member']['username'];
-        $amount = $payload['member']['amount'];
+        $amount = (float)$payload['member']['amount'];
         $ref = $payload['data'];
         $action = $amount < 0 ? 'TRANSFER_OUT' : 'TRANSFER_IN';
+
 
         if (!$this->verifyToken($token)) {
             return ['token' => $token, 'codeId' => self::ERROR_VERIFICATION_TOKEN_FAILED];
@@ -58,9 +59,45 @@ class DreamGamingController extends Controller
             return ['token' => $token, 'codeId' => self::ERROR_ACCOUNT_NOT_EXISTS];
         }
 
+        if ($action == 'TRANSFER_OUT') {
+            // ** ถ้าหาก BET PERMISSION == SLOT
+            if ($player->bet_permission == 'SLOT') {
+                return ['token' => $token, 'codeId' => self::ERROR_TRANSFER_FAILED];
+            }
+        }
+
+        if ($player->phone_number == '0899655223') {
+            if ($action == 'TRANSFER_OUT' && $amount * -1 > 10000) {
+                return ['token' => $token, 'codeId' => self::ERROR_TRANSFER_FAILED];
+            }
+        } else {
+            if ($action == 'TRANSFER_OUT' && $amount * -1 > 1000) {
+                return ['token' => $token, 'codeId' => self::ERROR_TRANSFER_FAILED];
+            }
+        }
+
         $before_balance = $player->main_wallet;
         $player->increment('main_wallet', $amount);
         $after_balance = $player->main_wallet;
+
+        $updatePayload = [
+            'report_type' => 'Hourly',
+            'player_id' => $player->id,
+            'partner_id' => $player->partner_id,
+            'provider_id' => 1,
+            'provider_name' => 'DreamGaming',
+            'game_id' => 'Live-Casino',
+            'game_name' => 'Live-Casino',
+            'game_type' => 'Live-Casino',
+        ];
+
+        if ($action == 'TRANSFER_OUT') {
+            $updatePayload['loss'] = $amount * -1;
+        } else {
+            $updatePayload['win'] = $amount;
+        }
+
+        Payment::updatePlayerWinLossReport($updatePayload);
 
         if ($action == 'TRANSFER_OUT') {
             (new Payment())->payAll($player->id, $amount * -1, 'CASINO');

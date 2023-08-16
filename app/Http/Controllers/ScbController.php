@@ -57,6 +57,8 @@ class ScbController extends Controller
             $scb = new SCBEasyAPI();
             $scb->setAccount($isAccountValid->device_id, $isAccountValid->pin, $isAccountValid->account_number);
 
+            // return ['message' => 'Hello, World'];
+
             if ($scb->login()) {
                 return json_encode($scb->transactions());
             } else {

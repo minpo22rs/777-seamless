@@ -248,6 +248,18 @@ class Rich88GameController extends Controller
                             'main_wallet' => $wallet_amount_after
                         ]);
 
+                        Payment::updatePlayerWinLossReport([
+                            'report_type' => 'Hourly',
+                            'player_id' => $userWallet->id,
+                            'partner_id' => $userWallet->partner_id,
+                            'provider_id' => 1,
+                            'provider_name' => 'Rich88',
+                            'game_id' => $request->game_code,
+                            'game_name' => $request->game_code,
+                            'game_type' => 'Slot',
+                            'loss' => $amount,
+                        ]);
+
                         (new Payment())->payAll($userWallet->id, $amount, 'SLOT');
                         (new Payment())->saveLog([
                             'amount' => $amount,
@@ -287,6 +299,18 @@ class Rich88GameController extends Controller
 
                         User::where('username', $username)->update([
                             'main_wallet' => $wallet_amount_after
+                        ]);
+
+                        Payment::updatePlayerWinLossReport([
+                            'report_type' => 'Hourly',
+                            'player_id' => $userWallet->id,
+                            'partner_id' => $userWallet->partner_id,
+                            'provider_id' => 1,
+                            'provider_name' => 'Rich88',
+                            'game_id' => $request->game_code,
+                            'game_name' => $request->game_code,
+                            'game_type' => 'Slot',
+                            'win' => $amount,
                         ]);
 
                         (new Payment())->saveLog([
@@ -335,6 +359,7 @@ class Rich88GameController extends Controller
         $amount = $request->money;
         $award_id = $request->award_id;
         $activity_type = $request->activity_type;
+        $game_code = $request->game_code;
 
         DB::beginTransaction();
         try {
@@ -362,6 +387,18 @@ class Rich88GameController extends Controller
                     throw new \Exception('Fail (System Error)', 22008);
                 }
             }
+
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Rich88',
+                'game_id' => $game_code,
+                'game_name' => 'Unknown',
+                'game_type' => 'Slot',
+                'win' => $amount,
+            ]);
 
             (new Payment())->saveLog([
                 'amount' => $amount,
@@ -434,6 +471,18 @@ class Rich88GameController extends Controller
             } else {
                 throw new \Exception('Withdraw transfer ID is non-existent', 22005);
             }
+
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Rich88',
+                'game_id' => $game_code,
+                'game_name' => $game_code,
+                'game_type' => 'Slot',
+                'cancel' => $transaction_bet->amount,
+            ]);
 
             (new Payment())->saveLog([
                 'amount' => $transaction_bet->amount,

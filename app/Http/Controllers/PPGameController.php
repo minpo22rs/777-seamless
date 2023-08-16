@@ -47,8 +47,13 @@ class PPGameController extends Controller
             exit();
         }
         $userToken = $user->token;
+        $currency = $user->currency;
+        $lang = 'th';
+        if ($currency != 'THB') {
+            $lang = 'en';
+        }
 
-        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=th&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://mm777bet.com");
+        $urlValue =  urlencode("token={$userToken}&symbol={$gameId}&language=$lang&technology=H5&platform=WEB&cashierUrl=&lobbyUrl=https://godbet.bet");
 
         $url = "{$this->hostGame}/gs2c/playGame.do?key={$urlValue}&stylename={$this->secureLogin}";
         // return $url;
@@ -58,7 +63,7 @@ class PPGameController extends Controller
 
     public function auth(Request $request)
     {
-        Log::debug($request);
+        // Log::debug($request);
         $user = User::where('token', '=', $request->token)->first();
         if (!$user) {
             return [
@@ -79,8 +84,8 @@ class PPGameController extends Controller
 
     public function balance(Request $request)
     {
-        Log::debug("balance===========>");
-        Log::debug($request);
+        // Log::debug("balance===========>");
+        // Log::debug($request);
 
         $userId = $request->userId;
         $user = User::where("username", $userId)->first();
@@ -104,8 +109,8 @@ class PPGameController extends Controller
 
     public function bet(Request $request)
     {
-        Log::debug("bet===========>");
-        Log::debug($request);
+        // Log::debug("bet===========>PP");
+        // Log::debug($request);
 
         $providerId = $request->providerId;
         $userId = $request->userId;
@@ -121,15 +126,32 @@ class PPGameController extends Controller
             ];
         }
 
+        // Log::debug("userId={$user->id}, partner_id={$user->partner_id}");
+
         $username = $user->username;
         $main_wallet = $user->main_wallet;
 
         DB::beginTransaction();
         try {
+            // ** ถ้ามีการวางเดิมพันมากกว่า 150 ไม่ให้วางเดิมพัน
+            // if ($amount > 150) {
+            //     return [
+            //         "error" => 1,
+            //         "description" => "Insufficient Balance"
+            //     ];
+            // }
+
             $userWallet = User::where('username', $username)->lockForUpdate()->first();
             $wallet_amount_before = $userWallet->main_wallet;
             $wallet_amount_after = $userWallet->main_wallet;
             $transactionId = 0;
+
+            if ($userWallet->is_promotion == 1) {
+                return [
+                    "error" => 1,
+                    "description" => "Insufficient Balance"
+                ];
+            }
 
             if ($wallet_amount_before > 0) {
 
@@ -171,6 +193,30 @@ class PPGameController extends Controller
                 ];
             }
 
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'PragmaticPlay',
+                'game_id' => $request->gameId,
+                'game_name' => 'Unknown',
+                'game_type' => is_numeric($request->gameId) ? 'Live-Casino' : 'Slot',
+                'loss' => $request->amount,
+            ]);
+
+            Payment::updateGameRound([
+                'provider' => 'PP',
+                'round_id' => $request->roundId,
+                'game_code' => $request->gameId,
+                'game_name' => $request->gameId,
+                'game_type' => is_numeric($request->gameId) ? 'LIVE-CASINO' : 'SLOT',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'bet' => $request->amount,
+                'is_round_ended' => 0
+            ]);
+
             (new Payment())->payAll($userWallet->id, $amount, 'SLOT');
             (new Payment())->saveLog([
                 'amount' => $request->amount,
@@ -206,8 +252,8 @@ class PPGameController extends Controller
 
     public function cancelBet(Request $request)
     {
-        Log::debug("cancelBet===========>");
-        Log::debug($request);
+        // Log::debug("cancelBet===========>");
+        // Log::debug($request);
 
         $providerId = $request->providerId;
         $userId = $request->userId;
@@ -263,11 +309,23 @@ class PPGameController extends Controller
                 }
             }
 
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'PragmaticPlay',
+                'game_id' => $request->gameId,
+                'game_name' => 'Unknown',
+                'game_type' => is_numeric($request->gameId) ? 'Live-Casino' : 'Slot',
+                'cancel' => $request->amount,
+            ]);
+
             (new Payment())->saveLog([
                 'amount' => $request->amount,
                 'before_balance' => $wallet_amount_before,
                 'after_balance' => $wallet_amount_after,
-                'action' => 'BET',
+                'action' => 'CANCEL',
                 'provider' => 'PP',
                 'game_type' => is_numeric($request->gameId) ? 'CASINO' : 'SLOT',
                 'game_ref' => '',
@@ -291,10 +349,33 @@ class PPGameController extends Controller
         }
     }
 
+    public function endRound(Request $request)
+    {
+        // Log::debug("endRound===========>PP");
+        // Log::debug($request);
+
+        $userId = $request->userId;
+
+        $user = User::where("username", $userId)->first();
+        if (!$user) {
+            return [
+                "error" => 2,
+                "description" => "Player not found or is logged out."
+            ];
+        }
+
+        return [
+            "error" => 0,
+            "description" => "Success",
+            "cash" => number_format((float) $user->main_wallet, 2, '.', ''),
+            "bonus" => 0,
+        ];
+    }
+
     public function settle(Request $request)
     {
-        Log::debug("settle===========>");
-        Log::debug($request);
+        // Log::debug("settle===========>PP");
+        // Log::debug($request);
 
         $providerId = $request->providerId;
         $userId = $request->userId;
@@ -310,6 +391,8 @@ class PPGameController extends Controller
                 "description" => "Player not found or is logged out."
             ];
         }
+
+        // Log::debug("userId {$user->id}");
         $username = $user->username;
         $main_wallet = $user->main_wallet;
 
@@ -346,6 +429,42 @@ class PPGameController extends Controller
                 $transactionId = $settleTransaction->id;
             }
 
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'PragmaticPlay',
+                'game_id' => $request->gameId,
+                'game_name' => 'Unknown',
+                'game_type' => is_numeric($request->gameId) ? 'Live-Casino' : 'Slot',
+                'win' => $request->amount,
+            ]);
+
+            Payment::updateGameRound([
+                'provider' => 'PP',
+                'round_id' => $request->roundId,
+                'game_code' => $request->gameId,
+                'game_name' => $request->gameId,
+                'game_type' => is_numeric($request->gameId) ? 'LIVE-CASINO' : 'SLOT',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'settle' => $request->amount,
+                'is_round_ended' => 1
+            ]);
+
+            // Payment::updateGameRound([
+            //     'provider' => 'PP',
+            //     'round_id' => $request->roundId,
+            //     'game_id' => $request->gameId,
+            //     'game_name' => $request->gameId,
+            //     'game_type' => is_numeric($request->gameId) ? 'LIVE-CASINO' : 'SLOT',
+            //     'partner_id' => $user->partner_id,
+            //     'player_id' => $user->id,
+            //     'settle' => $request->amount,
+            //     'is_round_ended' => 1
+            // ]);
+
             (new Payment())->saveLog([
                 'amount' => $request->amount,
                 'before_balance' => $wallet_amount_before,
@@ -379,8 +498,8 @@ class PPGameController extends Controller
 
     public function bonusWin(Request $request)
     {
-        Log::debug("bonusWin===========>");
-        Log::debug($request);
+        // Log::debug("bonusWin===========>");
+        // Log::debug($request);
 
         $providerId = $request->providerId;
         $userId = $request->userId;
@@ -432,8 +551,8 @@ class PPGameController extends Controller
 
     public function jackpotWin(Request $request)
     {
-        Log::debug("jackpotWin===========>");
-        Log::debug($request);
+        // Log::debug("jackpotWin===========>");
+        // Log::debug($request);
 
         $providerId = $request->providerId;
         $userId = $request->userId;
@@ -483,6 +602,18 @@ class PPGameController extends Controller
                 $transactionId = $jackpotWinTransaction->id;
             }
 
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'PragmaticPlay',
+                'game_id' => $request->gameId,
+                'game_name' => 'Unknown',
+                'game_type' => is_numeric($request->gameId) ? 'Live-Casino' : 'Slot',
+                'win' => $request->amount,
+            ]);
+
 
             (new Payment())->saveLog([
                 'amount' => $request->amount,
@@ -517,8 +648,8 @@ class PPGameController extends Controller
 
     public function promoWin(Request $request)
     {
-        Log::debug("promoWin===========>");
-        Log::debug($request);
+        // Log::debug("promoWin===========>");
+        // Log::debug($request);
 
         $providerId = $request->providerId;
         $userId = $request->userId;
@@ -569,6 +700,18 @@ class PPGameController extends Controller
             } else {
                 $transactionId = $promoWinTransaction->id;
             }
+
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $user->id,
+                'partner_id' => $user->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'PragmaticPlay',
+                'game_id' => $request->gameId,
+                'game_name' => 'Unknown',
+                'game_type' => is_numeric($request->gameId) ? 'Live-Casino' : 'Slot',
+                'win' => $request->amount,
+            ]);
 
             (new Payment())->saveLog([
                 'amount' => $request->amount,

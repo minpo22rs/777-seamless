@@ -2,6 +2,7 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Classes\Payment;
 use App\Classes\SCBEasyAPI;
 use App\Http\Controllers\DreamGamingController;
 use App\Http\Controllers\Rich88GameController;
@@ -24,7 +25,21 @@ use Illuminate\Http\Request;
 */
 
 $router->get('/hello-world', function () use ($router) {
-    return " 🌏 Hello, World!";
+    return Payment::updatePlayerWinLossReport([
+        'report_type' => 'hourly',
+        'provider_id' => 1,
+        'provider_name' => 'pg',
+        'game_id' => 1,
+        'game_name' => 'test-1',
+        'game_type' => 'fishing',
+        'tie' => 1,
+        'player_id' => 1,
+        'partner_id' => 1,
+    ]);
+    return [
+        'message' => 'Hello World',
+        'version' => $router->app->version(),
+    ];
 });
 
 
@@ -44,6 +59,7 @@ $router->get('/secret/v2/bank/truewallet', 'TrueWalletController@getTransaction'
 
 $router->get('/launcher/joker', 'LauncherController@joker');
 
+$router->get('/pragmatic/dev/launch/{userToken}/{gameId}', 'DevPPGameController@login');
 $router->get('/pragmatic/launch/{userToken}/{gameId}', 'PPGameController@login');
 $router->get('/pragmatic', 'PPGameController@index');
 $router->post('/pragmatic/authenticate', 'PPGameController@auth');
@@ -54,12 +70,18 @@ $router->post('/pragmatic/bonusWin', 'PPGameController@bonusWin');
 $router->post('/pragmatic/jackpotWin', 'PPGameController@jackpotWin');
 $router->post('/pragmatic/refund', 'PPGameController@cancelBet');
 $router->post('/pragmatic/promoWin', 'PPGameController@promoWin');
+$router->post('/pragmatic/endRound', 'PPGameController@endRound');
+
+// $router->get('/awc/launch/{username}/{gameType}', 'SexyGameController@login');
+// $router->post('/awc', 'SexyGameController@getBalance');
 
 $router->get('/awc/launch/{username}/{gameType}', 'SexyGameController@login');
-$router->post('/awc', 'SexyGameController@getBalance');
+$router->post('/awc', 'DevAwcController@getBalance');
 
-$router->get('/awc/dev/launch/{username}/{gameType}', 'DevSexyGameController@login');
-$router->post('/awc/dev', 'SexyGameController@getBalance');
+$router->get('/awc/dev/launch/{username}/{platform}', 'DevAwcController@login');
+$router->get('/awc/test/launch/{username}/{platform}', 'DevSexyGameController@login');
+$router->get('/awc/test/launch/{username}/{platform}/{category}/{gameCode}', 'DevSexyGameController@launch');
+$router->post('/awc/dev', 'DevAwcController@getBalance');
 
 $router->get('/jili', 'JiliGamController@index');
 $router->get('/jili/play/{userToken}', 'JiliGamController@login');
@@ -127,6 +149,8 @@ $account = [
 $bankSecretKey = env('BANK_SECRET_KEY', '');
 
 $router->get('/secret/bank/scb/verify-account', function (Request $request) use ($bankSecretKey, $account) {
+
+    return ['message' => 'Hello, World'];
     if ($request->secretKey != $bankSecretKey) {
         return ['message' => 'Your secret key is not valid'];
     }

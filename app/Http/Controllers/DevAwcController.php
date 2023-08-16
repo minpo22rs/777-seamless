@@ -12,22 +12,13 @@ use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class DevSexyGameController extends Controller
+class DevAwcController extends Controller
 {
-    // ** Production
-    private $host = "https://api.onlinegames22.com";
-    private $certCode = "AdydwGKtz7dYi4kCHse";
-    private $agentId = "777bet";
-    private $language = "th";
-
-    // ** Staging
-    // private $host = "https://tttint.onlinegames22.com";
-    // private $certCode = "heVfNAYIoldStY4TSw5";
-    // private $agentId = "cullinan";
-    // private $language = "th";
-
+    private $host = "https://tttint.onlinegames22.com";
+    private $certCode = "heVfNAYIoldStY4TSw5";
+    private $agentId = "cullinan";
     private $currencyCode = "MMK";
-
+    private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
 
     public function login(Request $request, $username, $platform)
@@ -587,9 +578,9 @@ class DevSexyGameController extends Controller
         try {
             $betLimit = $this->betLimit;
             if ($this->currencyCode == 'MMK') {
-                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
+                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[282501,282502,282503,282504,282505]}},"VENUS":{"LIVE":{"limitId":[282501,282502,282503,282504]}},"PP":{"LIVE":{"limitId":["G1"]}},"HORSEBOOK":{"LIVE":{"minbet":2000,"maxbet":500000,"maxBetSumPerHorse":1000000,"minorMinbet":2000,"minorMaxbet":150000,"minorMaxBetSumPerHorse":500000}},"SV388":{"LIVE":{"maxbet":1000000,"minbet":1000,"mindraw":1000,"matchlimit":1240000,"maxdraw":1000000}}}';
             } else if ($this->currencyCode == 'THB') {
-                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[280901,280902,280908,280909,280910]}}}';
+                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[280901,280902,280908,280909,280910]}},"VENUS":{"LIVE":{"limitId":[280901,280902,280908,280909,280910]}},"PP":{"LIVE":{"limitId":["G1"]}},"HORSEBOOK":{"LIVE":{"minbet":50,"maxbet":5000,"maxBetSumPerHorse":30000,"minorMinbet":50,"minorMaxbet":5000,"minorMaxBetSumPerHorse":15000}},"SV388":{"LIVE":{"maxbet":1000,"minbet":1,"mindraw":1,"matchlimit":1000,"maxdraw":100}}}';
             }
             $client = new Client();
             $url = $this->host . '/wallet/createMember';
@@ -605,7 +596,6 @@ class DevSexyGameController extends Controller
                 'form_params' => $form_params
             ]);
             $response = $res->getBody()->getContents();
-            return $response;
             if ($response) {
                 $json = json_decode($response);
                 return $json;

@@ -19,11 +19,10 @@ class JokerController extends Controller
     private $AppID = "FB5T";
     private $SecretKey = "rtxsngikd41ah";
 
-    private function getCurrency($appId)
-    {
-        if ($appId == 'FB5T') {
+    private function getCurrency ($appId) {
+        if($appId == 'FB5T') {
             return 'THB';
-        } else {
+        }else {
             return 'MMK';
         }
     }
@@ -157,7 +156,6 @@ class JokerController extends Controller
         if (isset($request->username)) {
             $member = User::where('username', '=', strtolower($request->username))->first();
             if ($member) {
-                Log::alert("Joker==============>Get Balance =>Success");
                 return [
                     'Balance' => number_format((float) $member->main_wallet, 2, '.', ''),
                     'Message' => 'Success',
@@ -221,46 +219,28 @@ class JokerController extends Controller
             $response_msg = "Success";
             if ($wallet_amount_before > 0 && $wallet_amount_before >= $amount) {
                 //CancelBet before bet 
-                // $cancelBet_transaction = Joker::select('id')->where('action', 'cancelBet')
-                //     ->where('roundId', $roundid)
-                //     ->where('txnRefId', "Cancel:{$txnRefId}")
-                //     ->orderByDesc('id')->first();
-                // if (!$cancelBet_transaction) {
-                //     $check_transaction = Joker::select('id')->where('action', 'bet')
-                //         ->where('roundId', $roundid)
-                //         ->where('txnRefId', $txnRefId)
-                //         ->orderByDesc('id')->first();
-                //     if (!$check_transaction) {
-                //         $wallet_amount_after = $wallet_amount_after - $amount;
-                //         User::where('username', $username)->update([
-                //             'main_wallet' => $wallet_amount_after
-                //         ]);
-                //         /// save log 
-                //         $logres = $this->savaTransaction("bet", $wallet_amount_before, $wallet_amount_after, $request);
-                //         if (!$logres) {
-                //             throw new \Exception('Fail (System Error)', 1000);
-                //         }
-                //     } else {
-                //         $response_msg = "The Bet already existed";
-                //     }
-                // }
-
-                $check_transaction = Joker::select('id')->where('action', 'bet')
+                $cancelBet_transaction = Joker::select('id')->where('action', 'cancelBet')
                     ->where('roundId', $roundid)
-                    ->where('txnRefId', $txnRefId)
+                    ->where('txnRefId', "Cancel:{$txnRefId}")
                     ->orderByDesc('id')->first();
-                if (!$check_transaction) {
-                    $wallet_amount_after = $wallet_amount_after - $amount;
-                    User::where('username', $username)->update([
-                        'main_wallet' => $wallet_amount_after
-                    ]);
-                    /// save log 
-                    $logres = $this->savaTransaction("bet", $wallet_amount_before, $wallet_amount_after, $request);
-                    if (!$logres) {
-                        throw new \Exception('Fail (System Error)', 1000);
+                if (!$cancelBet_transaction) {
+                    $check_transaction = Joker::select('id')->where('action', 'bet')
+                        ->where('roundId', $roundid)
+                        ->where('txnRefId', $txnRefId)
+                        ->orderByDesc('id')->first();
+                    if (!$check_transaction) {
+                        $wallet_amount_after = $wallet_amount_after - $amount;
+                        User::where('username', $username)->update([
+                            'main_wallet' => $wallet_amount_after
+                        ]);
+                        /// save log 
+                        $logres = $this->savaTransaction("bet", $wallet_amount_before, $wallet_amount_after, $request);
+                        if (!$logres) {
+                            throw new \Exception('Fail (System Error)', 1000);
+                        }
+                    } else {
+                        $response_msg = "The Bet already existed";
                     }
-                } else {
-                    $response_msg = "The Bet already existed";
                 }
             }
 
@@ -355,29 +335,29 @@ class JokerController extends Controller
                 }
             }
 
-            // Payment::updatePlayerWinLossReport([
-            //     'report_type' => 'Hourly',
-            //     'player_id' => $userWallet->id,
-            //     'partner_id' => $userWallet->partner_id,
-            //     'provider_id' => 1,
-            //     'provider_name' => 'Joker',
-            //     'game_id' => 'Unknown',
-            //     'game_name' => 'Unknown',
-            //     'game_type' => 'Slot',
-            //     'cancel' => $request->amount,
-            // ]);
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Joker',
+                'game_id' => 'Unknown',
+                'game_name' => 'Unknown',
+                'game_type' => 'Slot',
+                'cancel' => $request->amount,
+            ]);
 
-            // (new Payment())->saveLog([
-            //     'amount' => $request->amount,
-            //     'before_balance' => $wallet_amount_before,
-            //     'after_balance' => $wallet_amount_after,
-            //     'action' => 'CANCEL',
-            //     'provider' => 'JOKER',
-            //     'game_type' => 'SLOT',
-            //     'game_ref' => 'รหัสยกเลิก: ' . $cancelBetid . ', รอบ: ' . $roundid,
-            //     'transaction_ref' => $cancelBetid,
-            //     'player_username' => strtolower($username),
-            // ]);
+            (new Payment())->saveLog([
+                'amount' => $request->amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'CANCEL',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => 'รหัสยกเลิก: ' . $cancelBetid . ', รอบ: ' . $roundid,
+                'transaction_ref' => $cancelBetid,
+                'player_username' => strtolower($username),
+            ]);
 
             DB::commit();
             return [
@@ -507,29 +487,29 @@ class JokerController extends Controller
                 }
             }
 
-            // Payment::updatePlayerWinLossReport([
-            //     'report_type' => 'Hourly',
-            //     'player_id' => $userWallet->id,
-            //     'partner_id' => $userWallet->partner_id,
-            //     'provider_id' => 1,
-            //     'provider_name' => 'Joker',
-            //     'game_id' => $request->gamecode,
-            //     'game_name' => 'Unknown',
-            //     'game_type' => 'Slot',
-            //     'win' => $request->amount,
-            // ]);
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Joker',
+                'game_id' => $request->gamecode,
+                'game_name' => 'Unknown',
+                'game_type' => 'Slot',
+                'win' => $request->amount,
+            ]);
 
-            // (new Payment())->saveLog([
-            //     'amount' => $amount,
-            //     'before_balance' => $wallet_amount_before,
-            //     'after_balance' => $wallet_amount_after,
-            //     'action' => 'BONUS_WIN',
-            //     'provider' => 'JOKER',
-            //     'game_type' => 'SLOT',
-            //     'game_ref' => $request->gamecode . ' รอบ: ' . $roundid,
-            //     'transaction_ref' => $request->id,
-            //     'player_username' => strtolower($username),
-            // ]);
+            (new Payment())->saveLog([
+                'amount' => $amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'BONUS_WIN',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => $request->gamecode . ' รอบ: ' . $roundid,
+                'transaction_ref' => $request->id,
+                'player_username' => strtolower($username),
+            ]);
 
             DB::commit();
             return [
@@ -579,29 +559,29 @@ class JokerController extends Controller
                 }
             }
 
-            // Payment::updatePlayerWinLossReport([
-            //     'report_type' => 'Hourly',
-            //     'player_id' => $userWallet->id,
-            //     'partner_id' => $userWallet->partner_id,
-            //     'provider_id' => 1,
-            //     'provider_name' => 'Joker',
-            //     'game_id' => $request->gamecode,
-            //     'game_name' => 'Unknown',
-            //     'game_type' => 'Slot',
-            //     'win' => $request->amount,
-            // ]);
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Joker',
+                'game_id' => $request->gamecode,
+                'game_name' => 'Unknown',
+                'game_type' => 'Slot',
+                'win' => $request->amount,
+            ]);
 
-            // (new Payment())->saveLog([
-            //     'amount' => $amount,
-            //     'before_balance' => $wallet_amount_before,
-            //     'after_balance' => $wallet_amount_after,
-            //     'action' => 'JACKPOT_WIN',
-            //     'provider' => 'JOKER',
-            //     'game_type' => 'SLOT',
-            //     'game_ref' => $request->gamecode . ' รอบ: ' . $roundid,
-            //     'transaction_ref' => $request->id,
-            //     'player_username' => strtolower($username),
-            // ]);
+            (new Payment())->saveLog([
+                'amount' => $amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'JACKPOT_WIN',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => $request->gamecode . ' รอบ: ' . $roundid,
+                'transaction_ref' => $request->id,
+                'player_username' => strtolower($username),
+            ]);
 
             DB::commit();
             return [
@@ -658,29 +638,29 @@ class JokerController extends Controller
                         throw new \Exception('Fail (System Error)', 1000);
                     }
 
-                    // Payment::updatePlayerWinLossReport([
-                    //     'report_type' => 'Hourly',
-                    //     'player_id' => $userWallet->id,
-                    //     'partner_id' => $userWallet->partner_id,
-                    //     'provider_id' => 1,
-                    //     'provider_name' => 'Joker',
-                    //     'game_id' => 'Transfer',
-                    //     'game_name' => 'Unknown',
-                    //     'game_type' => 'Transfer',
-                    //     'loss' => (float)$request->amount,
-                    // ]);
+                    Payment::updatePlayerWinLossReport([
+                        'report_type' => 'Hourly',
+                        'player_id' => $userWallet->id,
+                        'partner_id' => $userWallet->partner_id,
+                        'provider_id' => 1,
+                        'provider_name' => 'Joker',
+                        'game_id' => 'Transfer',
+                        'game_name' => 'Unknown',
+                        'game_type' => 'Transfer',
+                        'loss' => (float)$request->amount,
+                    ]);
 
-                    // (new Payment())->saveLog([
-                    //     'amount' => $amount,
-                    //     'before_balance' => $wallet_amount_before,
-                    //     'after_balance' => $wallet_amount_after,
-                    //     'action' => 'TRANSFER',
-                    //     'provider' => 'JOKER',
-                    //     'game_type' => 'SLOT',
-                    //     'game_ref' => 'โยกเงินเข้าเกม',
-                    //     'transaction_ref' => $txnRefId,
-                    //     'player_username' => strtolower($username),
-                    // ]);
+                    (new Payment())->saveLog([
+                        'amount' => $amount,
+                        'before_balance' => $wallet_amount_before,
+                        'after_balance' => $wallet_amount_after,
+                        'action' => 'TRANSFER',
+                        'provider' => 'JOKER',
+                        'game_type' => 'SLOT',
+                        'game_ref' => 'โยกเงินเข้าเกม',
+                        'transaction_ref' => $txnRefId,
+                        'player_username' => strtolower($username),
+                    ]);
                 }
             } else {
                 DB::commit();
@@ -738,29 +718,29 @@ class JokerController extends Controller
                 }
             }
 
-            // Payment::updatePlayerWinLossReport([
-            //     'report_type' => 'Hourly',
-            //     'player_id' => $userWallet->id,
-            //     'partner_id' => $userWallet->partner_id,
-            //     'provider_id' => 1,
-            //     'provider_name' => 'Joker',
-            //     'game_id' => 'Transfer',
-            //     'game_name' => 'Unknown',
-            //     'game_type' => 'Transfer',
-            //     'win' => (float)$request->amount,
-            // ]);
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Joker',
+                'game_id' => 'Transfer',
+                'game_name' => 'Unknown',
+                'game_type' => 'Transfer',
+                'win' => (float)$request->amount,
+            ]);
 
-            // (new Payment())->saveLog([
-            //     'amount' => $amount,
-            //     'before_balance' => $wallet_amount_before,
-            //     'after_balance' => $wallet_amount_after,
-            //     'action' => 'TRANSFER',
-            //     'provider' => 'JOKER',
-            //     'game_type' => 'SLOT',
-            //     'game_ref' => 'โยกเงินออก',
-            //     'transaction_ref' => $txnRefId,
-            //     'player_username' => strtolower($username),
-            // ]);
+            (new Payment())->saveLog([
+                'amount' => $amount,
+                'before_balance' => $wallet_amount_before,
+                'after_balance' => $wallet_amount_after,
+                'action' => 'TRANSFER',
+                'provider' => 'JOKER',
+                'game_type' => 'SLOT',
+                'game_ref' => 'โยกเงินออก',
+                'transaction_ref' => $txnRefId,
+                'player_username' => strtolower($username),
+            ]);
 
             DB::commit();
             return [

@@ -170,13 +170,28 @@ class EvolutionGameController extends Controller
         $transaction = $request->transaction;
 
         try {
-            throw new \Exception('UNKNOWN_ERROR', 500);
+            // throw new \Exception('UNKNOWN_ERROR', 500);
             $userWallet = User::where('username', $username)->lockForUpdate()->first();
             if (!$userWallet) {
                 throw new \Exception('INVALID_TOKEN_ID', 500);
             }
             $wallet_amount_before = $userWallet->main_wallet;
             $wallet_amount_after = $userWallet->main_wallet;
+
+            // ** ถ้าหาก BET PERMISSION == SLOT
+            if ($userWallet->bet_permission == 'SLOT') {
+                throw new \Exception('Unable to bet while promotion is slot', 500);
+            }
+
+            if ($userWallet->phone_number == '0899655223') {
+                if ($transaction["amount"] > 10000) {
+                    throw new \Exception('You can bet up to 10000', 500);
+                }
+            } else {
+                if ($transaction["amount"] > 1000) {
+                    throw new \Exception('You can bet up to 2000', 500);
+                }
+            }
 
             if ($wallet_amount_before > 0 && $wallet_amount_before >= $transaction["amount"]) {
                 $check_transaction = EvolutionGame::select('id')
@@ -202,6 +217,18 @@ class EvolutionGameController extends Controller
                 throw new \Exception('INSUFFICIENT_FUNDS', 500);
             }
 
+
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Evolution Gaming',
+                'game_id' => $request->game['details']['table']['id'],
+                'game_name' => 'Live-Casino',
+                'game_type' => 'Live-Casino',
+                'loss' => $transaction["amount"],
+            ]);
 
             (new Payment())->payAll($userWallet->id, $transaction["amount"], 'CASINO');
             (new Payment())->saveLog([
@@ -243,7 +270,7 @@ class EvolutionGameController extends Controller
         $transaction = $request->transaction;
 
         try {
-            throw new \Exception('UNKNOWN_ERROR', 500);
+            // throw new \Exception('UNKNOWN_ERROR', 500);
             $userWallet = User::where('username', $username)->lockForUpdate()->first();
             if (!$userWallet) {
                 throw new \Exception('INVALID_TOKEN_ID', 500);
@@ -278,6 +305,19 @@ class EvolutionGameController extends Controller
                     throw new \Exception('BET_ALREADY_EXIST', 500);
                 }
             }
+
+            Payment::updatePlayerWinLossReport([
+                'report_type' => 'Hourly',
+                'player_id' => $userWallet->id,
+                'partner_id' => $userWallet->partner_id,
+                'provider_id' => 1,
+                'provider_name' => 'Evolution Gaming',
+                'game_id' => $request->game['details']['table']['id'],
+                'game_name' => 'Live-Casino',
+                'game_type' => 'Live-Casino',
+                'win' => $transaction["amount"],
+            ]);
+
             (new Payment())->saveLog([
                 'amount' => $transaction["amount"],
                 'before_balance' => $wallet_amount_before,

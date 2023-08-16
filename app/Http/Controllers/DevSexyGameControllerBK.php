@@ -14,296 +14,15 @@ use Illuminate\Support\Facades\Log;
 
 class DevSexyGameController extends Controller
 {
-    // ** Production
-    private $host = "https://api.onlinegames22.com";
-    private $certCode = "AdydwGKtz7dYi4kCHse";
-    private $agentId = "777bet";
-    private $language = "th";
-
-    // ** Staging
-    // private $host = "https://tttint.onlinegames22.com";
-    // private $certCode = "heVfNAYIoldStY4TSw5";
-    // private $agentId = "cullinan";
-    // private $language = "th";
-
+    private $host = "https://tttint.onlinegames22.com";
+    private $certCode = "heVfNAYIoldStY4TSw5";
+    private $agentId = "cullinan";
     private $currencyCode = "MMK";
-
+    private $language = "th";
     private $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
 
-    public function login(Request $request, $username, $platform)
+    public function login($username, $platform)
     {
-        $form_params = [];
-
-        $queryParameters = $request->query();
-
-        // Access query string parameters using array notation
-        $this->language = $queryParameters['language'] ?? 'en';
-
-        $user = User::where('username', $username)->first();
-        if (empty($user)) {
-            $response = ["message" => 'Oops! The user does not exist'];
-            return response($response, 401);
-            exit();
-        }
-        $this->currencyCode = $user->currency;
-
-        // if ($user->currency == 'MMK') {
-        //     $this->language = 'en';
-        // }
-
-        $username = $user->currency . $username;
-        $gameForbidden = '{"PP":{"LIVE":["ALL"]}, "FC":{"FH":["ALL"]}}';
-
-        $method = 'login';
-        if ($platform == 'SEXYBCRT') {
-            $method = 'doLoginAndLaunchGame';
-            $form_params = [
-                'cert' =>  $this->certCode,
-                'agentId' =>  $this->agentId,
-                'userId' =>  $username,
-                'gameCode'   => 'MX-LIVE-001',
-                'gameType' =>  'LIVE',
-                'platform' =>  'SEXYBCRT',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'hall' => 'SEXY',
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'RT') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'SLOT',
-                'platform' =>  'RT',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'KINGMAKER') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'KINGMAKER',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'PP') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'PP',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'JDB') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'JDB',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'JDBFISH') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'FH',
-                'platform' =>  'JDBFISH',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'VENUS') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'LIVE',
-                'platform' =>  'VENUS',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'SV388') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'LIVE',
-                'platform' =>  'SV388',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'SPADE') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'SPADE',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'YL') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'YL',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'E1SPORT') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'ESPORTS',
-                'platform' =>  'E1SPORT',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'HORSEBOOK') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'LIVE',
-                'platform' =>  'HORSEBOOK',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'FC') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'FC',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'FASTSPIN') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'FASTSPIN',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'JILI') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  '',
-                'platform' =>  'JILI',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'BG') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'LIVE',
-                'platform' =>  'BG',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        } else if ($platform == 'LUDO') {
-            $form_params = [
-                'agentId' =>  $this->agentId,
-                'cert' =>  $this->certCode,
-                'userId' =>  $username,
-                'gameCode'   => '',
-                'gameType' =>  'TABLE',
-                'platform' =>  'LUDO',
-                'isMobileLogin' =>  true,
-                'gameForbidden' => $gameForbidden,
-                'language' =>  $this->language,
-            ];
-        }
-
-        try {
-            $client = new Client();
-            $res = $client->request('POST', $this->host . '/wallet/' . $method, [
-                'form_params' => $form_params
-            ]);
-            $response = $res->getBody();
-            // return $response;
-            // return $response;
-            $json = json_decode($response);
-            // if ($json->status == '1004') {
-            //     return $response;
-            // }
-            if ($response) {
-                if ($json->status == '0000') {
-                    return redirect($json->url);
-                } else if ($json->status == '1028') {
-                    return $this->login($username, $platform);
-                } else if ($json->status == '1002') {
-                    $responsenewmember = $this->createMember($username);
-                    return $responsenewmember;
-                    if (!$responsenewmember) {
-                        return "error create member";
-                    } else if ($responsenewmember->status == '0000') {
-                        return $this->login($username, $platform);
-                    } else {
-                        return $responsenewmember;
-                    }
-                } else {
-                    return $json;
-                }
-            }
-        } catch (BadResponseException $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ]);
-        }
-    }
-
-    public function launch($username, $platform, $category, $gameCode)
-    {
-        // return [$username, $platform, $category, $gameCode];
         $form_params = [];
 
         $user = User::where('username', $username)->first();
@@ -317,8 +36,6 @@ class DevSexyGameController extends Controller
             $this->language = 'en';
         }
 
-        $username = $user->currency . $username;
-
         $method = 'login';
         if ($platform == 'SEXYBCRT') {
             $method = 'doLoginAndLaunchGame';
@@ -335,72 +52,66 @@ class DevSexyGameController extends Controller
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'RT') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  'SLOT',
                 'platform' =>  'RT',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'KINGMAKER') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  '',
                 'platform' =>  'KINGMAKER',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'PP') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  '',
                 'platform' =>  'PP',
                 'isMobileLogin' =>  true,
-                'gameForbidden' => '{"PP":{"LIVE":["ALL"]}}',
+                'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'JDB') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  '',
                 'platform' =>  'JDB',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'JDBFISH') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  'FH',
                 'platform' =>  'JDBFISH',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'VENUS') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
@@ -413,7 +124,6 @@ class DevSexyGameController extends Controller
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'SV388') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
@@ -426,33 +136,30 @@ class DevSexyGameController extends Controller
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'SPADE') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  '',
                 'platform' =>  'SPADE',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'YL') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  '',
                 'platform' =>  'YL',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'E1SPORT') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
@@ -465,7 +172,6 @@ class DevSexyGameController extends Controller
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'HORSEBOOK') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
@@ -478,7 +184,6 @@ class DevSexyGameController extends Controller
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'FC') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
@@ -491,33 +196,30 @@ class DevSexyGameController extends Controller
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'FASTSPIN') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  '',
                 'platform' =>  'FASTSPIN',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'JILI') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
                 'userId' =>  $username,
-                'gameCode'   => $gameCode,
-                'gameType' =>  $category,
+                'gameCode'   => '',
+                'gameType' =>  '',
                 'platform' =>  'JILI',
                 'isMobileLogin' =>  true,
                 'gameForbidden' => '',
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'BG') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
@@ -530,7 +232,6 @@ class DevSexyGameController extends Controller
                 'language' =>  $this->language,
             ];
         } else if ($platform == 'LUDO') {
-            $method = 'doLoginAndLaunchGame';
             $form_params = [
                 'agentId' =>  $this->agentId,
                 'cert' =>  $this->certCode,
@@ -550,7 +251,6 @@ class DevSexyGameController extends Controller
                 'form_params' => $form_params
             ]);
             $response = $res->getBody();
-            return $response;
             // return $response;
             // return $response;
             $json = json_decode($response);
@@ -587,10 +287,9 @@ class DevSexyGameController extends Controller
         try {
             $betLimit = $this->betLimit;
             if ($this->currencyCode == 'MMK') {
-                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[260901,260902,260903,260904,260905]}}}';
-            } else if ($this->currencyCode == 'THB') {
-                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[280901,280902,280908,280909,280910]}}}';
+                $betLimit = '{"SEXYBCRT":{"LIVE":{"limitId":[282501,282502,282503,282504,282505]}},"VENUS":{"LIVE":{"limitId":[282501,282502,282503,282504]}},"PP":{"LIVE":{"limitId":["G1"]}},"HORSEBOOK":{"LIVE":{"minbet":2000,"maxbet":500000,"maxBetSumPerHorse":1000000,"minorMinbet":2000,"minorMaxbet":150000,"minorMaxBetSumPerHorse":500000}},"SV388":{"LIVE":{"maxbet":1000000,"minbet":1000,"mindraw":1000,"matchlimit":1240000,"maxdraw":1000000}}}';
             }
+            // return $betLimit;
             $client = new Client();
             $url = $this->host . '/wallet/createMember';
             $form_params = [
@@ -605,7 +304,6 @@ class DevSexyGameController extends Controller
                 'form_params' => $form_params
             ]);
             $response = $res->getBody()->getContents();
-            return $response;
             if ($response) {
                 $json = json_decode($response);
                 return $json;
@@ -636,13 +334,12 @@ class DevSexyGameController extends Controller
         $wallet_amount_after = 0;
         $action = $message['action'];
         if ($action != "getBalance") {
-            Log::debug("AWC - Logger");
+            Log::debug($request);
         }
-        Log::debug($request);
         switch ($action) {
             case "getBalance":;
                 try {
-                    $username = $this->getUsername($message['userId']);
+                    $username = $message["userId"];
                     $userWallet = User::select('main_wallet')->where('username', $username)->first();
                     if ($userWallet) {
                         $main_wallet = $userWallet->main_wallet;
@@ -666,9 +363,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $payload = $element;
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -681,27 +376,12 @@ class DevSexyGameController extends Controller
                                         $wallet_amount_after = $wallet_amount_after - $element['betAmount'];
                                     }
 
-                                    User::where('username', $username)->update([
+                                    User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
-                                    // ** Update player win/loss
-                                    Payment::updatePlayerWinLossReport([
-                                        // 'currency' => $userWallet->currency,
-                                        'currency' => $payload['currency'],
-                                        'report_type' => 'Hourly',
-                                        'player_id' => $userWallet->id,
-                                        'partner_id' => $userWallet->partner_id,
-                                        'provider_id' => 1,
-                                        'provider_name' => $payload["platform"],
-                                        'game_id' => $payload['gameCode'],
-                                        'game_name' => $payload['gameName'],
-                                        'game_type' => $payload['gameType'],
-                                        'loss' => $payload['betAmount'],
-                                    ]);
-
-                                    (new Payment())->payAll($userWallet->id, $element['betAmount'], $payload['gameType']);
-
+                                    (new Payment())->payAll($userWallet->id, $element['betAmount'], 'CASINO');
+                                    $payload = $element;
                                     (new Payment())->saveLog([
                                         'amount' => $payload['betAmount'],
                                         'before_balance' => $wallet_amount_before,
@@ -711,12 +391,19 @@ class DevSexyGameController extends Controller
                                         'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
                                         'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
                                         'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
-                                        'player_username' => $username,
+                                        'player_username' => $payload['userId'],
                                     ]);
 
                                     if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
                                         throw new \Exception('Fail (System Error)', 9999);
                                     }
+
+                                    // Log::info([
+                                    //     'action' => $action,
+                                    //     'wallet_amount_before' => $wallet_amount_before,
+                                    //     'betAmount' => $element["betAmount"],
+                                    //     'wallet_amount_after' => $wallet_amount_after,
+                                    // ]);
                                 } else {
                                     throw new \Exception('Not Enough Balance', 1018);
                                 }
@@ -744,8 +431,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -756,7 +442,7 @@ class DevSexyGameController extends Controller
                                 if (!$cancelBetTransaction) {
                                     $wallet_amount_after = $wallet_amount_after + $betTransaction->betAmount;
 
-                                    User::where('username', $username)->update([
+                                    User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
@@ -798,7 +484,6 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
                         $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
@@ -811,7 +496,7 @@ class DevSexyGameController extends Controller
                                     if (!$voidBetTransaction) {
                                         $wallet_amount_after = $wallet_amount_after + $element["betAmount"];
 
-                                        User::where('username', $username)->update([
+                                        User::where('username', $element['userId'])->update([
                                             'main_wallet' => $wallet_amount_after
                                         ]);
 
@@ -824,7 +509,7 @@ class DevSexyGameController extends Controller
                                     if (!$voidBetTransaction) {
                                         $wallet_amount_after = $wallet_amount_after + $element["betAmount"];
 
-                                        User::where('username', $username)->update([
+                                        User::where('username', $element['userId'])->update([
                                             'main_wallet' => $wallet_amount_after
                                         ]);
 
@@ -854,8 +539,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -866,7 +550,7 @@ class DevSexyGameController extends Controller
                                 if (!$unVoidBetTransaction) {
                                     $wallet_amount_after = $wallet_amount_after - $voidBetTransaction->betAmount;
 
-                                    User::where('username', $username)->update([
+                                    User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
@@ -894,7 +578,6 @@ class DevSexyGameController extends Controller
             case "adjustBet":;
                 try {
                     $username = !empty($message["userId"]) ? $message["userId"] : $message["txns"][0]["userId"];
-                    $username = $this->getUsername($username);
                     $userWallet = User::select('main_wallet')->where('username', $username)->first();
                     if ($userWallet) {
                         $wallet_amount_before = $userWallet->main_wallet;
@@ -920,99 +603,28 @@ class DevSexyGameController extends Controller
                     ];
                 }
                 break;
-            case "refund":;
-                $x = 'A';
+            case "settle":
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
-                        if ($userWallet) {
-                            $wallet_amount_before = $userWallet->main_wallet;
-                            $wallet_amount_after = $userWallet->main_wallet;
-
-                            $settleTransaction = $this->checkTransactionHistory('refund', $element);
-
-                            if (!$settleTransaction) {
-                                $wallet_amount_after = $wallet_amount_after + $element["winAmount"] - $element["betAmount"];
-                                $x = '999';
-
-                                User::where('username', $username)->update([
-                                    'main_wallet' => $wallet_amount_after
-                                ]);
-
-                                $payload = $element;
-                                $winloss = !empty($payload["winAmount"]) ? $payload["winAmount"] : 0;
-                                (new Payment())->saveLog([
-                                    'amount' => $winloss,
-                                    'before_balance' => $wallet_amount_before,
-                                    'after_balance' => $wallet_amount_before + $winloss,
-                                    'action' => 'refund',
-                                    'provider' => $payload["platform"],
-                                    'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
-                                    'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
-                                    'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
-                                    'player_username' => $payload['userId'],
-                                ]);
-
-                                Log::info([
-                                    // "action" => $action,
-                                    // "userWallet" => $userWallet,
-                                    "wallet_amount_before" => $wallet_amount_before,
-                                    "wallet_amount_after" => $wallet_amount_after,
-                                ]);
-                                if (!$this->savaTransaction($wallet_amount_before, $wallet_amount_after, $element, $message)) {
-                                    throw new \Exception('Fail (System Error)', 9999);
-                                }
-                            }
-                        } else {
-                            throw new \Exception('Invalid user Id', 1000);
-                        }
-                    }
-                    DB::commit();
-                    return [
-                        "status" => "0000",
-                        // "wallet_amount_after" => $wallet_amount_after,
-                        // "x" => $x
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return [
-                        "status" => "xxx" . $e->getCode(),
-                        "desc" => $e->getMessage() . " (LINE {$e->getLine()})"
-                    ];
-                }
-                break;
-            case "settle":;
-                $x = 'A';
-                DB::beginTransaction();
-                try {
-                    foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
 
                             // ** Check Transaction
-                            if ($element['platform'] == 'SV388') {
+
+                            if ($element['platform'] == 'KINGMAKER') {
+                                // ** ค้นหา Settle Transaction
                                 $settleTransaction = $this->checkTransactionHistory('settle', $element);
+                                // ** ถ้าเจอ Transaction
                                 if ($settleTransaction) {
-                                    $x = 'B';
-                                    $lastAction = $this->checkTransactionHistory('unsettle', $element);
-                                    if ($lastAction) {
-                                        $x = 'C';
+                                    // ** ให้ทำการตรวจสอบ Transaction ล่าสุด ว่า Action
+                                    $lastAction = $this->checkTransactionHistory('', $element);
+                                    if ($lastAction->action == "unsettle") {
                                         $settleTransaction = false; /// re settle
                                     }
                                 }
-                            } else if ($element['platform'] == 'KINGMAKER') {
-                                $settleTransaction = $this->checkTransactionHistory('settle', $element);
-                                // if ($settleTransaction) {
-                                //     $lastAction = $this->checkTransactionHistory('', $element);
-                                //     if ($lastAction->action == "unsettle") {
-                                //         $settleTransaction = false; /// re settle
-                                //     }
-                                // }
                             } else {
                                 if (isset($element['settleType']) && $element['settleType'] == 'refPlatformTxId') {
                                     $settleTransaction = $this->checkRefPlatformTxId('settle', $element);
@@ -1033,41 +645,15 @@ class DevSexyGameController extends Controller
                                 }
                             }
 
-                            // if ($settleTransaction) {
-                            //     $lastAction = $this->checkTransactionHistory('', $element);
-                            //     if ($lastAction->action == "unsettle") {
-                            //         $settleTransaction = false; /// re settle
-                            //     }
-                            // }
-
                             if (!$settleTransaction) {
                                 $wallet_amount_after = $wallet_amount_after + $element["winAmount"];
-                                $x = '999';
 
-                                User::where('username', $username)->update([
+                                User::where('username', $element['userId'])->update([
                                     'main_wallet' => $wallet_amount_after
                                 ]);
 
                                 $payload = $element;
                                 $winloss = !empty($payload["winAmount"]) ? $payload["winAmount"] : 0;
-
-                                // ** Update player win/loss
-                                Payment::updatePlayerWinLossReport([
-                                    // 'currency' => $userWallet->currency,
-                                    'currency' => $userWallet->currency,
-                                    'report_type' => 'Hourly',
-                                    'player_id' => $userWallet->id,
-                                    'partner_id' => $userWallet->partner_id,
-                                    'provider_id' => 1,
-                                    'provider_name' => $payload["platform"],
-                                    'game_id' => $payload['gameCode'],
-                                    'game_name' => $payload['gameName'],
-                                    'game_type' => $payload['gameType'],
-                                    'win' => $payload['winAmount'],
-                                ]);
-
-                                (new Payment())->payAll($userWallet->id, $element['winAmount'], $payload['gameType']);
-
                                 (new Payment())->saveLog([
                                     'amount' => $winloss,
                                     'before_balance' => $wallet_amount_before,
@@ -1077,11 +663,11 @@ class DevSexyGameController extends Controller
                                     'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
                                     'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
                                     'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
-                                    'player_username' => $username,
+                                    'player_username' => $payload['userId'],
                                 ]);
 
                                 Log::info([
-                                    // "action" => $action,
+                                    "action" => $action,
                                     // "userWallet" => $userWallet,
                                     "wallet_amount_before" => $wallet_amount_before,
                                     "wallet_amount_after" => $wallet_amount_after,
@@ -1096,15 +682,13 @@ class DevSexyGameController extends Controller
                     }
                     DB::commit();
                     return [
-                        "status" => "0000",
-                        // "wallet_amount_after" => $wallet_amount_after,
-                        // "x" => $x
+                        "status" => "0000"
                     ];
                 } catch (\Exception $e) {
                     DB::rollBack();
                     return [
-                        "status" => "xxx" . $e->getCode(),
-                        "desc" => $e->getMessage() . " (LINE {$e->getLine()})"
+                        "status" => "" . $e->getCode(),
+                        "desc" => $e->getMessage()
                     ];
                 }
                 break;
@@ -1113,9 +697,8 @@ class DevSexyGameController extends Controller
                 try {
                     foreach ($message['txns'] as $element) {
                         $trxId = $element['platformTxId'];
-                        // Log::debug("SEXY=$trxId");
-                        $username = $this->getUsername($element['userId']);
-                        $wallet = User::where('username', $username)->lockForUpdate()->first();
+                        Log::debug("SEXY=$trxId");
+                        $wallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($wallet) {
                             // $beforeCredit = $wallet->main_wallet;
                             $sexy = SexyGame::where('platformTxId', $trxId)->where('action', 'settle')->first();
@@ -1154,8 +737,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -1175,7 +757,7 @@ class DevSexyGameController extends Controller
                                     if (!$unSettleTransaction) {
                                         $wallet_amount_after = $wallet_amount_after - $settleTransaction->winAmount;
 
-                                        User::where('username', $username)->update([
+                                        User::where('username', $element['userId'])->update([
                                             'main_wallet' => $wallet_amount_after
                                         ]);
 
@@ -1207,8 +789,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -1228,7 +809,7 @@ class DevSexyGameController extends Controller
                                     if (!$voidSettleTransaction) {
                                         $wallet_amount_after = $wallet_amount_after - $settleTransaction->winAmount + $element["betAmount"];
 
-                                        User::where('username', $username)->update([
+                                        User::where('username', $element['userId'])->update([
                                             'main_wallet' => $wallet_amount_after
                                         ]);
 
@@ -1260,8 +841,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -1278,15 +858,9 @@ class DevSexyGameController extends Controller
                                 }
 
                                 if (!$unvoidSettleTransaction) {
-                                    $settleTransaction = $this->checkTransactionHistory('settle', $element);
-                                    if ($settleTransaction) {
-                                        $wallet_amount_after = $wallet_amount_after + $settleTransaction->winAmount - $settleTransaction->betAmount;
-                                    } else {
-                                        $betAmount = isset($element["betAmount"]) ? $element["betAmount"] : $voidSettleTransaction->betAmount;
-                                        $wallet_amount_after = $wallet_amount_after + $voidSettleTransaction->winAmount - $betAmount;
-                                    }
+                                    $wallet_amount_after = $wallet_amount_after + $voidSettleTransaction->winAmount - $element["betAmount"];
 
-                                    User::where('username', $username)->update([
+                                    User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
@@ -1307,20 +881,15 @@ class DevSexyGameController extends Controller
                     DB::rollBack();
                     return [
                         "status" => "" . $e->getCode(),
-                        "desc" => $e->getMessage() . "LINE({$e->getLine()})"
+                        "desc" => $e->getMessage()
                     ];
                 }
                 break;
             case "betNSettle":;
-                // return false;
-                Log::debug("AWC - betNSettle");
-                Log::debug($request);
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $payload = $element;
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -1331,25 +900,9 @@ class DevSexyGameController extends Controller
                                 $betNSettleTransaction = $this->checkTransactionHistory('betNSettle', $element);
                                 if (!$betNSettleTransaction) {
 
-                                    // ** Update player win/loss
-                                    Payment::updatePlayerWinLossReport([
-                                        'currency' => $userWallet->currency,
-                                        'report_type' => 'Hourly',
-                                        'player_id' => $userWallet->id,
-                                        'partner_id' => $userWallet->partner_id,
-                                        'provider_id' => 1,
-                                        'provider_name' => $payload["platform"],
-                                        'game_id' => $payload['gameCode'],
-                                        'game_name' => $payload['gameName'],
-                                        'game_type' => $payload['gameType'],
-                                        'win' => $payload["winAmount"],
-                                        'loss' => $payload['betAmount'],
-                                    ]);
-
-                                    (new Payment())->payAll($userWallet->id, $element['betAmount'] + $element['winAmount'], $element['gameType']);
-
                                     if (!$this->checkTransactionHistory('cancelBetNSettle', $element)) {
                                         $wallet_amount_after = $wallet_amount_after - $element["betAmount"] + $element["winAmount"];
+                                        $payload = $element;
                                         if ($element["betAmount"] > 0) {
                                             (new Payment())->saveLog([
                                                 'amount' => $payload['betAmount'],
@@ -1360,7 +913,7 @@ class DevSexyGameController extends Controller
                                                 'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
                                                 'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
                                                 'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
-                                                'player_username' => $username,
+                                                'player_username' => $payload['userId'],
                                             ]);
                                         }
                                         if ($element["winAmount"] >= 0) {
@@ -1373,12 +926,12 @@ class DevSexyGameController extends Controller
                                                 'game_type' => !empty($payload["gameType"]) ? $payload["gameType"] : null,
                                                 'game_ref' => !empty($payload["gameName"]) ? $payload["gameName"] : null,
                                                 'transaction_ref' => !empty($payload["platformTxId"]) ? $payload["platformTxId"] : $payload["promotionTxId"],
-                                                'player_username' => $username,
+                                                'player_username' => $payload['userId'],
                                             ]);
                                         }
                                     }
 
-                                    User::where('username', $username)->update([
+                                    User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
@@ -1409,8 +962,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -1422,7 +974,7 @@ class DevSexyGameController extends Controller
                                     // $wallet_amount_after = $wallet_amount_after + $betNSettle->betAmount;
                                     $wallet_amount_after = $wallet_amount_after - $betNSettle->winAmount + $betNSettle->betAmount;
 
-                                    User::where('username', $username)->update([
+                                    User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
@@ -1457,14 +1009,13 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
 
                             if (isset($element['settleType']) && $element['settleType'] == 'refPlatformTxId') {
-                                $settleTransaction = $this->checkRefPlatformTxId('freeSpin', $element);
+                                $settleTransaction = $this->checkRefPlatformTxId('settle', $element);
                                 if ($settleTransaction) {
                                     $lastAction = $this->checkRefPlatformTxId('', $element);
                                     if ($lastAction->action == "unsettle") {
@@ -1472,7 +1023,7 @@ class DevSexyGameController extends Controller
                                     }
                                 }
                             } else {
-                                $settleTransaction = $this->checkTransactionHistory('freeSpin', $element);
+                                $settleTransaction = $this->checkTransactionHistory('settle', $element);
                                 if ($settleTransaction) {
                                     $lastAction = $this->checkTransactionHistory('', $element);
                                     if ($lastAction->action == "unsettle") {
@@ -1484,7 +1035,7 @@ class DevSexyGameController extends Controller
                             if (!$settleTransaction) {
                                 $wallet_amount_after = $wallet_amount_after + $element["winAmount"];
 
-                                User::where('username', $username)->update([
+                                User::where('username', $element['userId'])->update([
                                     'main_wallet' => $wallet_amount_after
                                 ]);
 
@@ -1532,8 +1083,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -1542,7 +1092,7 @@ class DevSexyGameController extends Controller
                             if (!$give) {
                                 $wallet_amount_after = $wallet_amount_after + $element["amount"];
 
-                                User::where('username', $username)->update([
+                                User::where('username', $element['userId'])->update([
                                     'main_wallet' => $wallet_amount_after
                                 ]);
 
@@ -1573,8 +1123,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
 
                             if ($userWallet->main_wallet <= 0) {
@@ -1590,7 +1139,7 @@ class DevSexyGameController extends Controller
                                     $wallet_amount_after = $wallet_amount_after - $element["tip"];
                                 }
 
-                                User::where('username', $username)->update([
+                                User::where('username', $element['userId'])->update([
                                     'main_wallet' => $wallet_amount_after
                                 ]);
 
@@ -1621,8 +1170,7 @@ class DevSexyGameController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
-                        $username = $this->getUsername($element['userId']);
-                        $userWallet = User::where('username', $username)->lockForUpdate()->first();
+                        $userWallet = User::where('username', $element['userId'])->lockForUpdate()->first();
                         if ($userWallet) {
                             $wallet_amount_before = $userWallet->main_wallet;
                             $wallet_amount_after = $userWallet->main_wallet;
@@ -1633,7 +1181,7 @@ class DevSexyGameController extends Controller
                                 if (!$cancelTip) {
                                     $wallet_amount_after = $wallet_amount_after + $tip->betAmount;
 
-                                    User::where('username', $username)->update([
+                                    User::where('username', $element['userId'])->update([
                                         'main_wallet' => $wallet_amount_after
                                     ]);
 
@@ -1687,8 +1235,8 @@ class DevSexyGameController extends Controller
         if ($action == "settle") {
             if (isset($payload["settleType"]) && $payload["settleType"] == "roundId") {
                 $sexyGame = $sexyGame->where('roundId', '=', $payload["roundId"]);
-                // } else if (isset($payload["settleType"]) && $payload["settleType"] == "refPlatformTxId") {
-                //     $sexyGame = $sexyGame->where('refPlatformTxId', '=', $payload["refPlatformTxId"]);
+            } else if (isset($payload["settleType"]) && $payload["settleType"] == "refPlatformTxId") {
+                $sexyGame = $sexyGame->where('refPlatformTxId', '=', $payload["refPlatformTxId"]);
             } else {
                 $sexyGame = $sexyGame->where('platformTxId', '=', $platformTxId);
             }
@@ -1761,10 +1309,5 @@ class DevSexyGameController extends Controller
             // echo $e;
             return false;
         }
-    }
-
-    private function getUsername($fullUsername)
-    {
-        return str_replace(array("thb", "mmk"), "", $fullUsername);
     }
 }

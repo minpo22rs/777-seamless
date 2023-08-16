@@ -4,7 +4,9 @@ namespace App\Classes;
 
 use App\Models\BetLog;
 use App\Models\Constant;
+use App\Models\GameRound;
 use App\Models\User;
+use App\Models\WinLossPlayer;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -15,10 +17,122 @@ class Payment
     private $bet;
     private $type;
 
+    static public function updateGameRound($payload)
+    {
+        try {
+            $provider = isset($payload['provider']) ? $payload['provider'] : null;
+            $round_id = isset($payload['round_id']) ? $payload['round_id'] : null;
+            $game_code = isset($payload['game_code']) ? $payload['game_code'] : null;
+            $game_name = isset($payload['game_name']) ? $payload['game_name'] : null;
+            $game_type = isset($payload['game_type']) ? $payload['game_type'] : null;
+            $partner_id = isset($payload['partner_id']) ? $payload['partner_id'] : null;
+            $player_id = isset($payload['player_id']) ? $payload['player_id'] : null;
+            $bet = isset($payload['bet']) ? $payload['bet'] : 0;
+            $settle = isset($payload['settle']) ? $payload['settle'] : 0;
+            $is_round_ended = isset($payload['is_round_ended']) ? $payload['is_round_ended'] : 0;
+            // ** Update or create game round
+            $initialData = [
+                'provider' => $provider,
+                'round_id' => $round_id,
+                'game_code' => $game_code,
+                'game_name' => $game_name,
+                'game_type' => $game_type,
+                'partner_id' => $partner_id,
+                'player_id' => $player_id,
+                'bet' => $bet,
+                'settle' => $settle,
+                'is_round_ended' => $is_round_ended
+            ];
+            Log::debug('initialData');
+            Log::debug($initialData);
+            $round = GameRound::firstOrCreate(
+                [
+                    'provider' => $provider,
+                    'round_id' => $round_id,
+                    'game_code' => $game_code
+                ],
+                $initialData
+            );
+            if (!$round->wasRecentlyCreated) {
+                $round->bet += $bet;
+                $round->settle += $settle;
+                $round->is_round_ended = $is_round_ended;
+                $round->save();
+            }
+            return $round;
+        } catch (Exception $e) {
+            Log::debug("updateGameRound===========>Error");
+            Log::debug(['message' => $e->getMessage()]);
+        }
+    }
+
+    static public function updatePlayerWinLossReport($payload)
+    {
+        // Default value
+        $report_type = $payload['report_type'];
+        $currency = isset($payload['currency']) ? $payload['currency'] : 'THB';
+        $provider_id = isset($payload['provider_id']) ? $payload['provider_id'] : null;
+        $provider_name = isset($payload['provider_name']) ? $payload['provider_name'] : null;
+        $game_id = isset($payload['game_id']) ? $payload['game_id'] : null;
+        $game_name = isset($payload['game_name']) ? $payload['game_name'] : null;
+        $game_type = isset($payload['game_type']) ? $payload['game_type'] : null;
+        $win = isset($payload['win']) ? $payload['win'] : 0;
+        $loss = isset($payload['loss']) ? $payload['loss'] : 0;
+        $tie = isset($payload['tie']) ? $payload['tie'] : 0;
+        $cancel = isset($payload['cancel']) ? $payload['cancel'] : 0;
+        $player_id = isset($payload['player_id']) ? $payload['player_id'] : null;
+        $partner_id = isset($payload['partner_id']) ? $payload['partner_id'] : null;
+        $period = date('Y-m-d H:00:00');
+        if ($report_type == 'Daily') {
+            $period = date('Y-m-d 00:00:00');
+        }
+        // Update win loss report
+        $initialData = [
+            'currency' => $currency,
+            'report_type' => $report_type,
+            'provider_id' => $provider_id,
+            'provider_name' => $provider_name,
+            'game_id' => $game_id,
+            'game_name' => $game_name,
+            'game_type' => $game_type,
+            'win' => $win,
+            'loss' => $loss,
+            'tie' => $tie,
+            'cancel' => $cancel,
+            'player_id' => $player_id,
+            'partner_id' => $partner_id,
+            'period' => $period,
+        ];
+        $winLossPlayer = WinLossPlayer::firstOrCreate(
+            [
+                'currency' => $currency,
+                'report_type' => $report_type,
+                'player_id' => $player_id,
+                'partner_id' => $partner_id,
+                'period' => $period,
+                'provider_name' => $provider_name,
+                'game_id' => $game_id,
+                'game_name' => $game_name,
+                'game_type' => $game_type
+            ],
+            $initialData
+        );
+        if (!$winLossPlayer->wasRecentlyCreated) {
+            $winLossPlayer->win += $win;
+            $winLossPlayer->loss += $loss;
+            $winLossPlayer->tie += $tie;
+            $winLossPlayer->cancel += $cancel;
+            $winLossPlayer->save();
+        }
+        // Return
+        return $winLossPlayer;
+    }
+
     public function saveLog($payload)
     {
         try {
             $log = new BetLog();
+            $log->currency = isset($payload['currency']) ? $payload['currency'] : 'THB';
             $log->action = $payload['action'];
             $log->provider = $payload['provider'];
             $log->game_type = $payload['game_type'];

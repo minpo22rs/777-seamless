@@ -11,7 +11,7 @@ class SCBEasyAPI
 
     public $availableBalance = 0;
     private $apiUrl = 'https://fasteasy.scbeasy.com:8443';
-    private $scbVersion = '3.59.0/6231';
+    private $scbVersion = '3.66.2/6960';
     private $deviceId = '';
     private $accountNumber = '';
     private $pin = '';
@@ -31,7 +31,7 @@ class SCBEasyAPI
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.59.0/6231");
+        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.66.2/6960");
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -57,7 +57,7 @@ class SCBEasyAPI
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.59.0/6231");
+        curl_setopt($ch, CURLOPT_USERAGENT, "Android/11;FastEasy/3.66.2/6960");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
@@ -146,7 +146,7 @@ class SCBEasyAPI
             $headers = array(
                 'Api-Auth: ' . $Auth,
                 'Content-Type: application/json',
-                'user-agent: Android/11;FastEasy/3.54.0/5742',
+                'user-agent: Android/11;FastEasy/3.64.1/5742',
             );
             $data = json_encode([
                 'deviceId'  => $this->deviceId,
@@ -188,7 +188,7 @@ class SCBEasyAPI
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
         // $headers[] = 'User-Agent: Android/11;FastEasy/3.35.0/3906';
-        $headers[] = 'User-Agent: Android/11;FastEasy/3.59.0/6231';
+        $headers[] = 'User-Agent: Android/11;FastEasy/3.66.2/6960';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -229,7 +229,7 @@ class SCBEasyAPI
 
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/11;FastEasy/3.59.0/6231';
+        $headers[] = 'User-Agent: Android/11;FastEasy/3.66.2/6960';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json; charset=UTF-8';
         // $headers[] = 'Content-Type: application/json';
@@ -322,7 +322,7 @@ class SCBEasyAPI
         $transferType = ($bank == 'SCB') ? '3RD' : (($bank == '014') ? '3RD' : 'ORFT');
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/10;FastEasy/3.59.0/6231';
+        $headers[] = 'User-Agent: Android/10;FastEasy/3.66.2/6960';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -374,7 +374,7 @@ class SCBEasyAPI
         $transferType = $bank == 'SCB' ? '3RD' : 'ORFT';
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/11;FastEasy/3.59.0/6231';
+        $headers[] = 'User-Agent: Android/11;FastEasy/3.66.2/6960';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -454,7 +454,7 @@ class SCBEasyAPI
         $transferType = ($bank == 'SCB') ? '3RD' : (($bank == '014') ? '3RD' : 'ORFT');
         $headers = array();
         $headers[] = "Api-Auth: $accessToken";
-        $headers[] = 'User-Agent: Android/10;FastEasy/3.59.0/6231';
+        $headers[] = 'User-Agent: Android/10;FastEasy/3.66.2/6960';
         $headers[] = 'Accept-Language: th';
         $headers[] = 'Content-Type: application/json';
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -531,6 +531,7 @@ class SCBEasyAPI
         $bankCode = [
             'SCB' => '014',
             'BBL' => '002',
+            'KK' => '069',
             'KBANK' => '004',
             'KTB' => '006',
             'BAAC' => '034', // ธกส.

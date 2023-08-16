@@ -2,11 +2,13 @@
 
 namespace App\Classes;
 
+use Exception;
+
 class TMNOne
 {
 
 	private $tmnone_endpoint = 'https://api.tmn.one/api.php';
-	private $wallet_endpoint = 'https://tmn-mobile-gateway.truemoney.com/tmn-mobile-gateway/';
+	private $wallet_endpoint = 'https://tmn-mobile-gateway.public-a-cloud1p.ascendmoney.io/tmn-mobile-gateway/';
 	private $wallet_user_agent = 'okhttp/4.4.0';
 	private $tmnone_keyid = 0;
 	private $wallet_msisdn, $wallet_login_token, $wallet_tmn_id, $wallet_device_id, $wallet_access_token, $proxy_ip = '', $proxy_username = '', $proxy_password = '';
@@ -119,6 +121,27 @@ class TMNOne
 		return isset($wallet_response_body['data']) ? $wallet_response_body['data'] : array();
 	}
 
+	public function generateVoucher($amount,$detail='')
+	{
+		try
+		{
+			$uri = 'transfer-composite/v1/vouchers/';
+			$signature = $this->calculate_sign256('/tmn-mobile-gateway/' . $uri . '|' .  $this->wallet_access_token . '|R|' . $amount . '|1|' . $detail);
+			$wallet_response_body = $this->wallet_connect($uri, array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
+				'{"amount":"' . $amount . '","detail":"' . $detail . '","tmn_id":"' . $this->wallet_tmn_id . '","mobile":"' . $this->wallet_msisdn . '","voucher_type":"R","member":"1"}');
+			if(substr($wallet_response_body['code'],-4) != '-200')
+			{
+				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
+			}
+			//{"code":"TRC-200","data":{"tmn_id":"tmn.xxxxxx","amount":1.00,"link":"0000000000f3453f62bd07185708325c38N","mobile":"0987654321","weight":0.4,"link_voucher":"https://gift.truemoney.com/campaign/?v=0000000000f3453f62bd07185708325c38N/#/voucher_detail/","utiba_id":50020690000000,"type":"R","update_date":1683893000100,"expire_date":1684153000100,"link_redeem":"https://gift.truemoney.com/campaign/?v=0000000000f3453f62bd07185708325c38N","member":1,"voucher_id":299291608745000000,"detail":"TEXT","create_date":1683893000100,"status":"active"}}
+			return $wallet_response_body['data'];
+		}
+		catch (Exception $e)
+		{
+			return array('error'=>$e->getMessage());
+		}
+	}
+
 	public function getRecipientName($payee_wallet_id)
 	{
 		try
@@ -128,7 +151,7 @@ class TMNOne
 			$signature = $this->calculate_sign256('/tmn-mobile-gateway/' . $uri . '|' .  $this->wallet_access_token . '|' . $amount . '|' . $payee_wallet_id);
 			$wallet_response_body = $this->wallet_connect($uri, array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
 				'{"receiverId":"' . $payee_wallet_id . '","amount":"' . $amount . '"}');
-			if($wallet_response_body['code'] != 'TRC-200')
+			if(substr($wallet_response_body['code'],-4) != '-200')
 			{
 				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
 			}
@@ -149,7 +172,7 @@ class TMNOne
 			$signature = $this->calculate_sign256('/tmn-mobile-gateway/' . $uri . '|' .  $this->wallet_access_token . '|' . $amount . '|' . $payee_wallet_id);
 			$wallet_response_body = $this->wallet_connect($uri, array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
 				'{"receiverId":"' . $payee_wallet_id . '","amount":"' . $amount . '"}');
-			if($wallet_response_body['code'] != 'TRC-200')
+			if(substr($wallet_response_body['code'],-4) != '-200')
 			{
 				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
 			}
@@ -160,7 +183,7 @@ class TMNOne
 			$signature = $this->calculate_sign256($reference_key);
 			$wallet_response_body = $this->wallet_connect($uri, array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
 				'{"personal_message":"' . $personal_msg . '","signature":"' . $signature . '"}', 'PUT');
-			if($wallet_response_body['code'] != 'TRC-200')
+			if(substr($wallet_response_body['code'],-4) != '-200')
 			{
 				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
 			}
@@ -169,7 +192,7 @@ class TMNOne
 			$signature = $this->calculate_sign256($reference_key);
 			$wallet_response_body = $this->wallet_connect($uri, array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
 				'{"reference_key":"' . $reference_key . '","signature":"' . $signature . '"}');
-			if($wallet_response_body['code'] != 'TRC-200')
+			if(substr($wallet_response_body['code'],-4) != '-200')
 			{
 				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
 			}
@@ -192,7 +215,7 @@ class TMNOne
 			$signature = $this->calculate_sign256($amount . '|' . $bank_code . '|' . $bank_ac);
 			$wallet_response_body = $this->wallet_connect('fund-composite/v1/withdrawal/draft-transaction', array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
 				'{"bank_name":"' . $bank_code . '","bank_account":"' . $bank_ac . '","amount":"' . $amount . '"}');
-			if($wallet_response_body['code'] != 'FNC-200')
+			if(substr($wallet_response_body['code'],-4) != '-200')
 			{
 				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
 			}
@@ -202,7 +225,7 @@ class TMNOne
 			$signature = $this->calculate_sign256('/tmn-mobile-gateway/' . $uri . '|' .  $this->wallet_access_token . '|' . $draft_transaction_id);
 			$wallet_response_body = $this->wallet_connect($uri, array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
 				'{"draft_transaction_id":"' . $draft_transaction_id . '"}');
-			if($wallet_response_body['code'] != 'MAS-428') //{"code":"MAS-428","data":{"csid":"a9d8989b-xxxx-xxxx-xxxx-b4a36a0bfa7d","method":"pin"}}
+			if(substr($wallet_response_body['code'],-4) != '-428') //{"code":"MAS-428","data":{"csid":"a9d8989b-xxxx-xxxx-xxxx-b4a36a0bfa7d","method":"pin"}}
 			{
 				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
 			}
@@ -212,7 +235,7 @@ class TMNOne
 			$signature = $this->calculate_sign256($this->wallet_access_token . '|' . $csid . '|' . $wallet_pin . '|manual_input');
 			$wallet_response_body = $this->wallet_connect('mobile-auth-service/v1/authentications/pin', array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng=', 'CSID: ' . $csid),
 				'{"pin":"' . $wallet_pin . '","method":"manual_input"}');
-			if($wallet_response_body['code'] != 'FNC-200') //{"code":"FNC-200","data":{"withdraw_status":"VERIFIED"}}
+			if(substr($wallet_response_body['code'],-4) != '-200') //{"code":"FNC-200","data":{"withdraw_status":"VERIFIED"}}
 			{
 				throw new Exception($wallet_response_body['code'] . ' - ' . $wallet_response_body['message']);
 			}
@@ -222,6 +245,23 @@ class TMNOne
 			return array('error'=>$e->getMessage() . ' (line:' . $e->getLine() . ')');
 		}
 		return isset($wallet_response_body['data']) ? $wallet_response_body['data'] : array();
+	}
+
+	public function getWithdrawalStatus($draft_transaction_id)
+	{
+		$wallet_response_body = array();
+		try
+		{
+			$uri = 'fund-composite/v1/withdrawal/transaction/' . $draft_transaction_id . '/status';
+			$signature = $this->calculate_sign256('/tmn-mobile-gateway/' . $uri);
+			$wallet_response_body = $this->wallet_connect($uri, array('Content-Type: application/json', 'Authorization: ' . $this->wallet_access_token , 'signature: ' . $signature , 'X-Device: ' . $this->wallet_device_id, 'X-Geo-Location: city=; country=; country_code=', 'X-Geo-Position: lat=; lng='),
+				'');
+		}
+		catch (Exception $e)
+		{
+			return array('error'=>$e->getMessage());
+		}
+		return $wallet_response_body;
 	}
 
 	private function tmnone_connect($request_body)
@@ -237,7 +277,7 @@ class TMNOne
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt($curl, CURLOPT_HTTPHEADER, array('X-KeyID: ' . $this->tmnone_keyid, 'Content-Type: application/json'));
-		curl_setopt($curl, CURLOPT_USERAGENT, 'okhttp/4.4.0/202207111432/' . $this->tmnone_keyid);
+		curl_setopt($curl, CURLOPT_USERAGENT, 'okhttp/4.4.0/202305202300/' . $this->tmnone_keyid);
 		curl_setopt($curl, CURLOPT_POST, true);
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $request_body);
 		curl_setopt($curl, CURLOPT_HEADERFUNCTION,
@@ -307,7 +347,7 @@ class TMNOne
 			curl_setopt($curl, CURLOPT_PROXY, $this->proxy_ip);
 			if(!empty($this->proxy_username))
 			{
-				curl_setopt($ch, CURLOPT_PROXYUSERPWD, $this->proxy_username . ':' . $this->proxy_password);
+				curl_setopt($curl, CURLOPT_PROXYUSERPWD, $this->proxy_username . ':' . $this->proxy_password);
 			}
 		}
 		if(!empty($request_body))
@@ -326,6 +366,10 @@ class TMNOne
 		}
 		curl_close($curl);
 		$response_body = json_decode($response_body,true);
+		if(empty($response_body))
+		{
+			return '';
+		}
 		if(isset($response_body['code']) && $response_body['code'] == 'MAS-401')
 		{
 			$request_body = json_encode(array('scope'=>'text_storage_obj', 'cmd'=>'set', 'data'=>''));
@@ -341,3 +385,5 @@ class TMNOne
 	}
 
 }
+
+?>
