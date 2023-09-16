@@ -138,6 +138,10 @@ class JiliGamController extends Controller
 
     public function bet(Request $request)
     {
+        return [
+            "errorCode" => 1018,
+            "message" => "Not Enough Balance"
+        ];
         // Log::info("JILI bet==================>");
         // Log::debug($request);
 
@@ -155,6 +159,13 @@ class JiliGamController extends Controller
         }
         $username = $user->username;
         $main_wallet = $user->main_wallet;
+
+        // if ($user->partner_id != 3) {
+        //     return [
+        //         "errorCode" => 1018,
+        //         "message" => "Not Enough Balance"
+        //     ];
+        // }
 
         DB::beginTransaction();
         try {
@@ -234,10 +245,10 @@ class JiliGamController extends Controller
     public function cancelBet(Request $request)
     {
         // Log::info("JILI cancelBet==================>");
-        return [
-            "errorCode" => 5,
-            "message" => "Fail (System Error)"
-        ];
+        // return [
+        //     "errorCode" => 5,
+        //     "message" => "Fail (System Error)"
+        // ];
         // Log::debug($request);
 
         $reqId = $request->reqId;

@@ -146,12 +146,12 @@ class PPGameController extends Controller
             $wallet_amount_after = $userWallet->main_wallet;
             $transactionId = 0;
 
-            if ($userWallet->is_promotion == 1) {
-                return [
-                    "error" => 1,
-                    "description" => "Insufficient Balance"
-                ];
-            }
+            // if ($userWallet->is_promotion == 1) {
+            //     return [
+            //         "error" => 1,
+            //         "description" => "Insufficient Balance"
+            //     ];
+            // }
 
             if ($wallet_amount_before > 0) {
 

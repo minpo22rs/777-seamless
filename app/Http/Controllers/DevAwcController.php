@@ -656,7 +656,17 @@ class DevAwcController extends Controller
                 DB::beginTransaction();
                 try {
                     foreach ($message['txns'] as $element) {
+                        
                         $payload = $element;
+
+                        if ($payload["platform"] == 'PP') {
+                            throw new \Exception('Not Enough Balance', 1018);
+                        }
+
+                        if ($payload["platform"] == 'YL' && $payload["gameName"] == 'Guess') {
+                            throw new \Exception('Not Enough Balance', 1018);
+                        }
+
                         $username = $this->getUsername($element['userId']);
                         $userWallet = User::where('username', $username)->lockForUpdate()->first();
                         if ($userWallet) {
@@ -1309,6 +1319,15 @@ class DevAwcController extends Controller
                 try {
                     foreach ($message['txns'] as $element) {
                         $payload = $element;
+
+                        if ($payload["platform"] == 'FC') {
+                            throw new \Exception('Not Enough Balance', 1018);
+                        }
+
+                        if ($payload["platform"] == 'JILI') {
+                            throw new \Exception('Not Enough Balance', 1018);
+                        }
+
                         $username = $this->getUsername($element['userId']);
                         $userWallet = User::where('username', $username)->lockForUpdate()->first();
                         if ($userWallet) {
